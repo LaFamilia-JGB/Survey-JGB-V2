@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>La Familia - JGB - Merch Order</title>
+</head>
+<body>
+    <h1>הזמנת מדבקות</h1>
+    <p>מלאו את הטופס להזמנה</p>
+
+    <form action="https://script.google.com/macros/s/AKfycbyzqKnfmGPh2W20DrVTsO3JdQZ2BOJQA76qN4fNxbE5EPky8DcWix41zLYibcxZmyCx/exec" method="POST" onsubmit="combineAddress()">
+        <label>שם מלא:</label><br>
+        <input type="text" name="full-name"><br>
+
+        <label>כמות מדבקות:</label><br>
+        <input type="number" name="sticker-quantity"><br>
+
+        <label>כמה שולם בפייבוקס:</label><br>
+        <input type="number" name="paybox-amount" step="0.01"><br>
+
+        <label>משלוח/איסוף:</label><br>
+        <select name="shipping-pickup" id="shipping-pickup" onchange="toggleAddressFields()">
+            <option value="איסוף" selected>איסוף</option>
+            <option value="משלוח">משלוח</option>
+        </select><br>
+
+        <div id="address-fields" style="display: none;">
+            <label>עיר:</label><br>
+            <input type="text" id="city"><br>
+
+            <label>רחוב:</label><br>
+            <input type="text" id="street"><br>
+
+            <label>מספר דירה:</label><br>
+            <input type="number" id="apartment-number"><br>
+
+            <label>מיקוד:</label><br>
+            <input type="text" id="zip-code"><br>
+        </div>
+
+        <input type="hidden" name="shipping-address" id="shipping-address">
+
+        <label>שולם על ידי:</label><br>
+        <input type="text" name="paid-by"><br>
+
+        <label>טלפון:</label><br>
+        <input type="tel" name="phone"><br>
+
+        <label>הערות:</label><br>
+        <textarea name="notes"></textarea><br>
+
+        <input type="submit" value="שלח הזמנה">
+    </form>
+
+    <h2>אפשרויות תשלום</h2>
+    <p>לאחר שליחת ההזמנה, בחרו אחת מהאפשרויות הבאות לתשלום:</p>
+    <ul>
+        <li><a href="[BIT_PAYMENT_LINK]" target="_blank">תשלום ב-Bit</a></li>
+        <li><a href="[PAYBOX_PAYMENT_LINK]" target="_blank">תשלום ב-Paybox</a></li>
+    </ul>
+    <p><a href="shirts.html">להזמנת חולצות</a></p>
+
+    <script>
+        function toggleAddressFields() {
+            var select = document.getElementById("shipping-pickup");
+            var addressFields = document.getElementById("address-fields");
+            if (select.value === "משלוח") {
+                addressFields.style.display = "block";
+            } else {
+                addressFields.style.display = "none";
+            }
+        }
+
+        function combineAddress() {
+            var select = document.getElementById("shipping-pickup");
+            var hiddenAddress = document.getElementById("shipping-address");
+            if (select.value === "משלוח") {
+                var city = document.getElementById("city").value || "";
+                var street = document.getElementById("street").value || "";
+                var apartment = document.getElementById("apartment-number").value || "";
+                var zip = document.getElementById("zip-code").value || "";
+                hiddenAddress.value = `${city}, ${street}, דירה ${apartment}, מיקוד ${zip}`.replace(/, ,/g, ",").trim();
+            } else {
+                hiddenAddress.value = "";
+            }
+        }
+    </script>
+</body>
+</html>
