@@ -54,6 +54,15 @@
         <input type="submit" value="שלח הזמנה">
     </form>
 
+    <!-- Payment Options -->
+    <h2>אפשרויות תשלום</h2>
+    <p>לאחר שליחת ההזמנה, בחרו אחת מהאפשרויות הבאות לתשלום:</p>
+    <ul>
+        <li><a href="[BIT_PAYMENT_LINK]" target="_blank">תשלום ב-Bit</a></li>
+        <li><a href="[PAYBOX_PAYMENT_LINK]" target="_blank">תשלום ב-Paybox</a></li>
+    </ul>
+    <p><a href="shirts.html">להזמנת חולצות</a></p>
+
     <script>
         function toggleAddressFields() {
             var select = document.getElementById("shipping-pickup");
@@ -68,17 +77,14 @@
         function combineAddress() {
             var select = document.getElementById("shipping-pickup");
             var hiddenAddress = document.getElementById("shipping-address");
-            
             if (select.value === "משלוח") {
                 var city = document.getElementById("city").value || "";
                 var street = document.getElementById("street").value || "";
                 var apartment = document.getElementById("apartment-number").value || "";
                 var zip = document.getElementById("zip-code").value || "";
-                
-                // Combine into one string
                 hiddenAddress.value = `${city}, ${street}, דירה ${apartment}, מיקוד ${zip}`.replace(/, ,/g, ",").trim();
             } else {
-                hiddenAddress.value = ""; // Empty for איסוף
+                hiddenAddress.value = "";
             }
         }
     </script>
