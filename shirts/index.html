@@ -12,6 +12,9 @@
             margin: 0;
             padding: 20px;
             direction: rtl;
+            background-image: url('[BACKGROUND_IMAGE_PATH]');
+            background-size: cover;
+            background-position: center;
         }
         h1 {
             color: #ffeb3b;
@@ -24,8 +27,8 @@
         }
         form {
             max-width: 500px;
-            margin: 0 auto;
-            background: #1a1a1a;
+            margin: 20px auto;
+            background: rgba(26, 26, 26, 0.9);
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(255, 235, 59, 0.3);
@@ -57,24 +60,29 @@
         #address-fields, #paybox-name-field {
             display: none;
         }
-        h2 {
-            color: #ffeb3b;
-            margin-top: 20px;
+        .payment-options {
+            text-align: center;
+            margin-bottom: 20px;
         }
-        ul {
-            list-style: none;
-            padding: 0;
-        }
-        ul li {
-            margin: 10px 0;
-        }
-        ul li a {
-            color: #ffeb3b;
+        .payment-options a {
+            display: inline-block;
+            background-color: #ffeb3b;
+            color: #000;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 25px;
             text-decoration: none;
             font-weight: bold;
+            transition: background-color 0.3s;
         }
-        ul li a:hover {
-            color: #ffd700;
+        .payment-options a:hover {
+            background-color: #ffd700;
+        }
+        .shirt-entry {
+            border: 1px solid #ffeb3b;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
         }
         @media (max-width: 600px) {
             form {
@@ -86,35 +94,55 @@
             p {
                 font-size: 1em;
             }
+            .payment-options a {
+                display: block;
+                margin: 10px 0;
+            }
         }
     </style>
 </head>
 <body>
-    <img src="https://lafamilia-jgb.github.io/Merch-JGB/images/logo.png" alt="Beitar Jerusalem Logo" style="max-width: 100px; display: block; margin: 0 auto 20px;">
+    <div class="payment-options">
+        <a href="[PAYBOX_LINK_1]" target="_blank">אפשרות פייבוקס 1</a>
+        <a href="[PAYBOX_LINK_2]" target="_blank">אפשרות פייבוקס 2</a>
+        <a href="[PAYBOX_LINK_3]" target="_blank">אפשרות פייבוקס 3</a>
+    </div>
+
     <h1>הזמנת חולצות</h1>
     <p>מלאו את הטופס להזמנה</p>
 
-    <form action="https://script.google.com/macros/s/AKfycbyzqKnfmGPh2W20DrVTsO3JdQZ2BOJQA76qN4fNxbE5EPky8DcWix41zLYibcxZmyCx/exec" method="POST" onsubmit="return validateForm()">
+    <form action="https://script.google.com/macros/s/AKfycbyzqKnfmGPh2W20DrVTsO3JdQZ2BOJQA76qN4fNxbE5EPky8DcWix41zLYibcxZmyCx/exec" method="POST" onsubmit="return validateAndConfirm()">
         <label>שם מלא:</label>
         <input type="text" name="full-name" required>
 
-        <label>מידה:</label>
-        <select name="size" required>
+        <div id="shirt-sizes">
+            <div class="shirt-entry">
+                <label>מידה:</label>
+                <select name="size[]" required>
+                    <option value="" selected>בחר</option>
+                    <option value="XS">XS</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
+                    <option value="XXL">XXL</option>
+                    <option value="XXXL">XXXL</option>
+                </select>
+            </div>
+        </div>
+        <button type="button" onclick="addShirt()">הוסף חולצה נוספת</button>
+
+        <label>מחיר:</label>
+        <select name="paybox-amount" id="price" required>
             <option value="" selected>בחר</option>
-            <option value="XS">XS</option>
-            <option value="S">S</option>
-            <option value="M">M</option>
-            <option value="L">L</option>
-            <option value="XL">XL</option>
-            <option value="XXL">XXL</option>
-            <option value="XXXL">XXXL</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="150">150</option>
+            <!-- Add more price options here -->
         </select>
 
-        <label>כמה שולם בפייבוקס:</label>
-        <input type="number" name="paybox-amount" step="0.01" required>
-
         <label>משלוח/איסוף:</label>
-        <select name="shipping-pickup" id="shipping-pickup" onchange="toggleAddressFields()" required>
+        <select name="shipping-pickup" id="shipping-pickup" onchange="toggleAddressFields(); updatePrice();" required>
             <option value="" selected>בחר</option>
             <option value="איסוף">איסוף</option>
             <option value="משלוח">משלוח</option>
@@ -157,15 +185,9 @@
         <input type="submit" value="שלח הזמנה">
     </form>
 
-    <h2>אפשרויות תשלום</h2>
-    <p>לאחר שליחת ההזמנה, בחרו אחת מהאפשרויות הבאות לתשלום:</p>
-    <ul>
-        <li><a href="[PAYBOX_LINK_1]" target="_blank">אפשרות פייבוקס 1</a></li>
-        <li><a href="[PAYBOX_LINK_2]" target="_blank">אפשרות פייבוקס 2</a></li>
-        <li><a href="[PAYBOX_LINK_3]" target="_blank">אפשרות פייבוקס 3</a></li>
-    </ul>
-
     <script>
+        let confirmed = false;
+
         function toggleAddressFields() {
             var select = document.getElementById("shipping-pickup");
             var addressFields = document.getElementById("address-fields");
@@ -176,6 +198,38 @@
             var select = document.getElementById("paid-by");
             var payboxNameField = document.getElementById("paybox-name-field");
             payboxNameField.style.display = select.value === "שולם על ידי מישהו אחר" ? "block" : "none";
+        }
+
+        function addShirt() {
+            var container = document.getElementById("shirt-sizes");
+            var newEntry = document.createElement("div");
+            newEntry.className = "shirt-entry";
+            newEntry.innerHTML = `
+                <label>מידה:</label>
+                <select name="size[]" required>
+                    <option value="" selected>בחר</option>
+                    <option value="XS">XS</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
+                    <option value="XXL">XXL</option>
+                    <option value="XXXL">XXXL</option>
+                </select>
+            `;
+            container.appendChild(newEntry);
+        }
+
+        function updatePrice() {
+            var shipping = document.getElementById("shipping-pickup").value;
+            var priceSelect = document.getElementById("price");
+            var basePrices = [50, 100, 150]; // Base price options
+            var shirtCount = document.getElementsByName("size[]").length;
+            priceSelect.innerHTML = '<option value="" selected>בחר</option>';
+            basePrices.forEach(price => {
+                var totalPrice = shipping === "משלוח" ? (price * shirtCount) + 28 : price * shirtCount;
+                priceSelect.innerHTML += `<option value="${totalPrice}">${totalPrice}</option>`;
+            });
         }
 
         function combineAddress() {
@@ -194,14 +248,14 @@
 
         function validateForm() {
             var fullName = document.getElementsByName("full-name")[0].value;
-            var size = document.getElementsByName("size")[0].value;
+            var sizes = Array.from(document.getElementsByName("size[]")).map(s => s.value);
             var payboxAmount = document.getElementsByName("paybox-amount")[0].value;
             var shippingPickup = document.getElementById("shipping-pickup").value;
             var paidBy = document.getElementById("paid-by").value;
             var phone = document.getElementsByName("phone")[0].value;
             var payboxName = document.getElementById("paybox-name") ? document.getElementById("paybox-name").value : "";
 
-            if (!fullName || !size || !payboxAmount || !shippingPickup || !paidBy || !phone) {
+            if (!fullName || sizes.some(s => !s) || !payboxAmount || !shippingPickup || !paidBy || !phone) {
                 alert("אנא מלא את כל השדות החובה");
                 return false;
             }
@@ -222,8 +276,40 @@
                 return false;
             }
 
-            combineAddress();
             return true;
+        }
+
+        function validateAndConfirm() {
+            if (!confirmed) {
+                if (validateForm()) {
+                    alert("שים לב!\n- נא לוודא שמילאת את כל הפרטים עבור ההזמנה\n- נא לוודא שהתשלום בוצע לפני שליחת ההזמנה\nלא ניתן יהיה לבצע שינויים.");
+                    confirmed = true;
+                }
+                return false;
+            } else {
+                submitMultipleShirts();
+                confirmed = false; // Reset for next submission
+                return false; // Prevent default form submission
+            }
+        }
+
+        function submitMultipleShirts() {
+            var form = document.forms[0];
+            var sizes = Array.from(document.getElementsByName("size[]")).map(s => s.value);
+            var data = new FormData(form);
+            combineAddress();
+
+            sizes.forEach(size => {
+                data.set("size[]", size); // Update size for each submission
+                fetch(form.action, {
+                    method: "POST",
+                    body: data
+                }).then(response => response.text())
+                  .then(text => console.log(text))
+                  .catch(error => console.error("Error:", error));
+            });
+
+            alert("ההזמנה נשלחה בהצלחה!");
         }
     </script>
 </body>
