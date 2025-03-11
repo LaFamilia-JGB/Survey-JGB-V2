@@ -79,10 +79,40 @@
             background-color: #ffd700;
         }
         .shirt-entry {
-            border: 1px solid #ffeb3b;
-            padding: 10px;
+            display: flex;
+            align-items: center;
             margin-bottom: 10px;
-            border-radius: 5px;
+        }
+        .shirt-entry select {
+            flex: 1;
+            margin-right: 10px;
+        }
+        .shirt-entry span {
+            margin: 0 10px;
+            color: #ffeb3b;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #ffeb3b;
+            margin: 0 5px;
+        }
+        .icon-btn:hover {
+            color: #ffd700;
+        }
+        .address-row {
+            display: flex;
+            gap: 10px;
+        }
+        .address-row input {
+            flex: 1;
+        }
+        .logo {
+            max-width: 100px;
+            display: block;
+            margin: 0 auto 20px;
         }
         @media (max-width: 600px) {
             form {
@@ -98,10 +128,15 @@
                 display: block;
                 margin: 10px 0;
             }
+            .address-row {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
+    <img src="Merch-JGB/images/logo.png" alt="Beitar Jerusalem Logo" class="logo">
+
     <div class="payment-options">
         <a href="[PAYBOX_LINK_1]" target="_blank">אפשרות פייבוקס 1</a>
         <a href="[PAYBOX_LINK_2]" target="_blank">אפשרות פייבוקס 2</a>
@@ -117,7 +152,6 @@
 
         <div id="shirt-sizes">
             <div class="shirt-entry">
-                <label>מידה:</label>
                 <select name="size[]" required>
                     <option value="" selected>בחר</option>
                     <option value="XS">XS</option>
@@ -128,18 +162,11 @@
                     <option value="XXL">XXL</option>
                     <option value="XXXL">XXXL</option>
                 </select>
+                <span>50</span>
+                <button type="button" class="icon-btn" onclick="addShirt(this)">+</button>
+                <button type="button" class="icon-btn" onclick="removeShirt(this)">🗑️</button>
             </div>
         </div>
-        <button type="button" onclick="addShirt()">הוסף חולצה נוספת</button>
-
-        <label>מחיר:</label>
-        <select name="paybox-amount" id="price" required>
-            <option value="" selected>בחר</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-            <option value="150">150</option>
-            <!-- Add more price options here -->
-        </select>
 
         <label>משלוח/איסוף:</label>
         <select name="shipping-pickup" id="shipping-pickup" onchange="toggleAddressFields(); updatePrice();" required>
@@ -148,18 +175,32 @@
             <option value="משלוח">משלוח</option>
         </select>
 
+        <label>מחיר:</label>
+        <select name="paybox-amount" id="price" required>
+            <option value="" selected>בחר</option>
+        </select>
+
         <div id="address-fields">
-            <label>עיר:</label>
-            <input type="text" id="city">
-
-            <label>רחוב:</label>
-            <input type="text" id="street">
-
-            <label>מספר דירה:</label>
-            <input type="number" id="apartment-number">
-
-            <label>מיקוד:</label>
-            <input type="text" id="zip-code">
+            <div class="address-row">
+                <div>
+                    <label>עיר:</label>
+                    <input type="text" id="city">
+                </div>
+                <div>
+                    <label>רחוב:</label>
+                    <input type="text" id="street">
+                </div>
+            </div>
+            <div class="address-row">
+                <div>
+                    <label>מספר דירה:</label>
+                    <input type="number" id="apartment-number">
+                </div>
+                <div>
+                    <label>מיקוד:</label>
+                    <input type="text" id="zip-code">
+                </div>
+            </div>
         </div>
 
         <input type="hidden" name="shipping-address" id="shipping-address">
@@ -187,6 +228,7 @@
 
     <script>
         let confirmed = false;
+        const SHIRT_BASE_PRICE = 50;
 
         function toggleAddressFields() {
             var select = document.getElementById("shipping-pickup");
@@ -200,12 +242,11 @@
             payboxNameField.style.display = select.value === "שולם על ידי מישהו אחר" ? "block" : "none";
         }
 
-        function addShirt() {
+        function addShirt(button) {
             var container = document.getElementById("shirt-sizes");
             var newEntry = document.createElement("div");
             newEntry.className = "shirt-entry";
             newEntry.innerHTML = `
-                <label>מידה:</label>
                 <select name="size[]" required>
                     <option value="" selected>בחר</option>
                     <option value="XS">XS</option>
@@ -216,20 +257,29 @@
                     <option value="XXL">XXL</option>
                     <option value="XXXL">XXXL</option>
                 </select>
+                <span>${SHIRT_BASE_PRICE}</span>
+                <button type="button" class="icon-btn" onclick="addShirt(this)">+</button>
+                <button type="button" class="icon-btn" onclick="removeShirt(this)">🗑️</button>
             `;
             container.appendChild(newEntry);
+            updatePrice();
+        }
+
+        function removeShirt(button) {
+            var entries = document.getElementsByClassName("shirt-entry");
+            if (entries.length > 1) {
+                button.parentElement.remove();
+                updatePrice();
+            }
         }
 
         function updatePrice() {
             var shipping = document.getElementById("shipping-pickup").value;
             var priceSelect = document.getElementById("price");
-            var basePrices = [50, 100, 150]; // Base price options
             var shirtCount = document.getElementsByName("size[]").length;
-            priceSelect.innerHTML = '<option value="" selected>בחר</option>';
-            basePrices.forEach(price => {
-                var totalPrice = shipping === "משלוח" ? (price * shirtCount) + 28 : price * shirtCount;
-                priceSelect.innerHTML += `<option value="${totalPrice}">${totalPrice}</option>`;
-            });
+            var basePrice = SHIRT_BASE_PRICE * shirtCount;
+            var totalPrice = shipping === "משלוח" ? basePrice + 28 : basePrice;
+            priceSelect.innerHTML = `<option value="${totalPrice}" selected>${totalPrice}</option>`;
         }
 
         function combineAddress() {
@@ -288,8 +338,8 @@
                 return false;
             } else {
                 submitMultipleShirts();
-                confirmed = false; // Reset for next submission
-                return false; // Prevent default form submission
+                confirmed = false;
+                return false;
             }
         }
 
@@ -300,7 +350,7 @@
             combineAddress();
 
             sizes.forEach(size => {
-                data.set("size[]", size); // Update size for each submission
+                data.set("size[]", size);
                 fetch(form.action, {
                     method: "POST",
                     body: data
