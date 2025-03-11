@@ -266,6 +266,7 @@
                 return false;
             }
 
+            combineAddress(); // Ensure address is updated before submission
             return true;
         }
 
@@ -290,20 +291,20 @@
         function submitStickers() {
             var form = document.forms[0];
             var data = new FormData(form);
-            combineAddress();
 
             fetch(SCRIPT_URL, {
                 method: "POST",
                 body: data
-            }).then(response => response.text())
-              .then(text => {
-                  console.log(text);
-                  alert("ההזמנה נשלחה בהצלחה!");
-              })
-              .catch(error => {
-                  console.error("Error:", error);
-                  alert("שגיאה בשליחת ההזמנה: " + error.message);
-              });
+            }).then(response => {
+                if (!response.ok) throw new Error("שגיאה ברשת");
+                return response.text();
+            }).then(text => {
+                console.log(text);
+                window.location.href = "https://lafamilia-jgb.github.io/Merch-JGB/confirmation.html";
+            }).catch(error => {
+                console.error("Error:", error);
+                alert("שגיאה בשליחת ההזמנה: " + error.message);
+            });
         }
     </script>
 </body>
