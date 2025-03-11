@@ -163,7 +163,7 @@
     <h1>הזמנת חולצות - לה פמיליה - צובעים את ירושלים!</h1>
     <p>מלאו את הטופס אחרי שביצעתם תשלום בפייבוקס</p>
 
-    <form action="https://script.google.com/macros/s/AKfycbyhQZFUPTJJiZAW05n1Qfp1rSBOzJWm1SJ-BNj4NqruD3hLNjB-m5-o7zoNgyDsIQil/exec" method="POST" onsubmit="return validateAndConfirm()">
+    <form onsubmit="return validateAndConfirm()">
         <label>שם מלא:</label>
         <input type="text" name="שם מלא" required>
 
@@ -247,6 +247,7 @@
     <script>
         let confirmed = false;
         const SHIRT_BASE_PRICE = 50;
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhQZFUPTJJiZAW05n1Qfp1rSBOzJWm1SJ-BNj4NqruD3hLNjB-m5-o7zoNgyDsIQil/exec";
 
         function toggleAddressFields() {
             var select = document.getElementById("shipping-pickup");
@@ -345,6 +346,7 @@
                 return false;
             }
 
+            combineAddress(); // Ensure address is updated before submission
             return true;
         }
 
@@ -370,19 +372,23 @@
             var form = document.forms[0];
             var sizes = Array.from(document.getElementsByName("מידה")).map(s => s.value);
             var data = new FormData(form);
-            combineAddress();
 
             sizes.forEach(size => {
                 data.set("מידה", size);
-                fetch(form.action, {
+                fetch(SCRIPT_URL, {
                     method: "POST",
                     body: data
-                }).then(response => response.text())
-                  .then(text => console.log(text))
-                  .catch(error => console.error("Error:", error));
+                }).then(response => {
+                    if (!response.ok) throw new Error("שגיאה ברשת");
+                    return response.text();
+                }).then(text => {
+                    console.log(text);
+                    window.location.href = "https://lafamilia-jgb.github.io/Merch-JGB/confirmation.html";
+                }).catch(error => {
+                    console.error("Error:", error);
+                    alert("שגיאה בשליחת ההזמנה: " + error.message);
+                });
             });
-
-            alert("ההזמנה נשלחה בהצלחה!");
         }
     </script>
 </body>
