@@ -12,7 +12,7 @@
             margin: 0;
             padding: 20px;
             direction: rtl;
-            background-image: url('[BACKGROUND_IMAGE_PATH]');
+            background-image: url('https://lafamilia-jgb.github.io/Merch-JGB/images/background.png');
             background-size: cover;
             background-position: center;
         }
@@ -78,18 +78,28 @@
         .payment-options a:hover {
             background-color: #ffd700;
         }
+        .shirt-sizes {
+            margin-bottom: 15px;
+        }
         .shirt-entry {
             display: flex;
             align-items: center;
-            margin-bottom: 10px;
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+        .shirt-entry label {
+            margin: 0 10px 0 0;
+            flex: 0 0 60px;
         }
         .shirt-entry select {
             flex: 1;
-            margin-right: 10px;
         }
         .shirt-entry span {
             margin: 0 10px;
             color: #ffeb3b;
+            flex: 0 0 40px;
         }
         .icon-btn {
             background: none;
@@ -131,11 +141,18 @@
             .address-row {
                 flex-direction: column;
             }
+            .shirt-entry {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .shirt-entry label {
+                margin: 0 0 5px;
+            }
         }
     </style>
 </head>
 <body>
-    <img src="Merch-JGB/images/logo.png" alt="Beitar Jerusalem Logo" class="logo">
+    <img src="https://lafamilia-jgb.github.io/Merch-JGB/images/logo.png" alt="Beitar Jerusalem Logo" class="logo">
 
     <div class="payment-options">
         <a href="[PAYBOX_LINK_1]" target="_blank">אפשרות פייבוקס 1</a>
@@ -146,13 +163,14 @@
     <h1>הזמנת חולצות</h1>
     <p>מלאו את הטופס להזמנה</p>
 
-    <form action="https://script.google.com/macros/s/AKfycbyzqKnfmGPh2W20DrVTsO3JdQZ2BOJQA76qN4fNxbE5EPky8DcWix41zLYibcxZmyCx/exec" method="POST" onsubmit="return validateAndConfirm()">
+    <form action="https://script.google.com/macros/s/AKfycbyhQZFUPTJJiZAW05n1Qfp1rSBOzJWm1SJ-BNj4NqruD3hLNjB-m5-o7zoNgyDsIQil/exec" method="POST" onsubmit="return validateAndConfirm()">
         <label>שם מלא:</label>
-        <input type="text" name="full-name" required>
+        <input type="text" name="שם מלא" required>
 
-        <div id="shirt-sizes">
+        <div class="shirt-sizes">
             <div class="shirt-entry">
-                <select name="size[]" required>
+                <label>מידה:</label>
+                <select name="מידה" required>
                     <option value="" selected>בחר</option>
                     <option value="XS">XS</option>
                     <option value="S">S</option>
@@ -169,14 +187,14 @@
         </div>
 
         <label>משלוח/איסוף:</label>
-        <select name="shipping-pickup" id="shipping-pickup" onchange="toggleAddressFields(); updatePrice();" required>
+        <select name="משלוח/איסוף" id="shipping-pickup" onchange="toggleAddressFields(); updatePrice();" required>
             <option value="" selected>בחר</option>
             <option value="איסוף">איסוף</option>
             <option value="משלוח">משלוח</option>
         </select>
 
-        <label>מחיר:</label>
-        <select name="paybox-amount" id="price" required>
+        <label>כמה שולם בפייבוקס:</label>
+        <select name="כמה שולם בפייבוקס" id="price" required>
             <option value="" selected>בחר</option>
         </select>
 
@@ -203,10 +221,10 @@
             </div>
         </div>
 
-        <input type="hidden" name="shipping-address" id="shipping-address">
+        <input type="hidden" name="כתובת למשלוח" id="shipping-address">
 
         <label>שולם על ידי:</label>
-        <select name="paid-by" id="paid-by" onchange="togglePayboxName()" required>
+        <select name="שולם על ידי" id="paid-by" onchange="togglePayboxName()" required>
             <option value="" selected>בחר</option>
             <option value="אני שילמתי">אני שילמתי</option>
             <option value="שולם על ידי מישהו אחר">שולם על ידי מישהו אחר</option>
@@ -214,14 +232,14 @@
 
         <div id="paybox-name-field">
             <label>השם פייבוקס ששולם על ידו:</label>
-            <input type="text" name="paybox-name" id="paybox-name">
+            <input type="text" name="שם פייבוקס" id="paybox-name">
         </div>
 
         <label>טלפון:</label>
-        <input type="tel" name="phone" required>
+        <input type="tel" name="טלפון" required>
 
         <label>הערות:</label>
-        <textarea name="notes"></textarea>
+        <textarea name="הערות"></textarea>
 
         <input type="submit" value="שלח הזמנה">
     </form>
@@ -243,11 +261,12 @@
         }
 
         function addShirt(button) {
-            var container = document.getElementById("shirt-sizes");
+            var container = document.querySelector(".shirt-sizes");
             var newEntry = document.createElement("div");
             newEntry.className = "shirt-entry";
             newEntry.innerHTML = `
-                <select name="size[]" required>
+                <label>מידה:</label>
+                <select name="מידה" required>
                     <option value="" selected>בחר</option>
                     <option value="XS">XS</option>
                     <option value="S">S</option>
@@ -276,7 +295,7 @@
         function updatePrice() {
             var shipping = document.getElementById("shipping-pickup").value;
             var priceSelect = document.getElementById("price");
-            var shirtCount = document.getElementsByName("size[]").length;
+            var shirtCount = document.getElementsByName("מידה").length;
             var basePrice = SHIRT_BASE_PRICE * shirtCount;
             var totalPrice = shipping === "משלוח" ? basePrice + 28 : basePrice;
             priceSelect.innerHTML = `<option value="${totalPrice}" selected>${totalPrice}</option>`;
@@ -297,12 +316,12 @@
         }
 
         function validateForm() {
-            var fullName = document.getElementsByName("full-name")[0].value;
-            var sizes = Array.from(document.getElementsByName("size[]")).map(s => s.value);
-            var payboxAmount = document.getElementsByName("paybox-amount")[0].value;
+            var fullName = document.getElementsByName("שם מלא")[0].value;
+            var sizes = Array.from(document.getElementsByName("מידה")).map(s => s.value);
+            var payboxAmount = document.getElementsByName("כמה שולם בפייבוקס")[0].value;
             var shippingPickup = document.getElementById("shipping-pickup").value;
             var paidBy = document.getElementById("paid-by").value;
-            var phone = document.getElementsByName("phone")[0].value;
+            var phone = document.getElementsByName("טלפון")[0].value;
             var payboxName = document.getElementById("paybox-name") ? document.getElementById("paybox-name").value : "";
 
             if (!fullName || sizes.some(s => !s) || !payboxAmount || !shippingPickup || !paidBy || !phone) {
@@ -345,12 +364,12 @@
 
         function submitMultipleShirts() {
             var form = document.forms[0];
-            var sizes = Array.from(document.getElementsByName("size[]")).map(s => s.value);
+            var sizes = Array.from(document.getElementsByName("מידה")).map(s => s.value);
             var data = new FormData(form);
             combineAddress();
 
             sizes.forEach(size => {
-                data.set("size[]", size);
+                data.set("מידה", size);
                 fetch(form.action, {
                     method: "POST",
                     body: data
