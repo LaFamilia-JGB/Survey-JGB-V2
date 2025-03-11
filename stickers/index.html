@@ -12,7 +12,7 @@
             margin: 0;
             padding: 20px;
             direction: rtl;
-            background-image: url('[BACKGROUND_IMAGE_PATH]');
+            background-image: url('https://lafamilia-jgb.github.io/Merch-JGB/images/background.png');
             background-size: cover;
             background-position: center;
         }
@@ -111,7 +111,7 @@
     </style>
 </head>
 <body>
-    <img src="images/logo.png" alt="Beitar Jerusalem Logo" class="logo">
+    <img src="https://lafamilia-jgb.github.io/Merch-JGB/images/logo.png" alt="Beitar Jerusalem Logo" class="logo">
 
     <div class="payment-options">
         <a href="[PAYBOX_LINK_1]" target="_blank">אפשרות פייבוקס 1</a>
@@ -122,12 +122,12 @@
     <h1>הזמנת מדבקות</h1>
     <p>מלאו את הטופס להזמנה</p>
 
-    <form action="https://script.google.com/macros/s/AKfycbyzqKnfmGPh2W20DrVTsO3JdQZ2BOJQA76qN4fNxbE5EPky8DcWix41zLYibcxZmyCx/exec" method="POST" onsubmit="return validateAndConfirm()">
+    <form action="https://script.google.com/macros/s/AKfycby3LeEQGjzKUjehE_xKsOD_qbZqvMe4Bwh5zbhqsOGUUoqJTiTYkZl9RYd_k_ImipExhg/exec" method="POST" onsubmit="return validateAndConfirm()">
         <label>שם מלא:</label>
-        <input type="text" name="full-name" required>
+        <input type="text" name="שם מלא" required>
 
         <label>כמות מדבקות:</label>
-        <select name="sticker-quantity" required>
+        <select name="כמות מדבקות" required>
             <option value="" selected>בחר</option>
             <option value="500">500</option>
             <option value="1000">1000</option>
@@ -135,14 +135,14 @@
         </select>
 
         <label>משלוח/איסוף:</label>
-        <select name="shipping-pickup" id="shipping-pickup" onchange="toggleAddressFields(); updatePrice();" required>
+        <select name="משלוח/איסוף" id="shipping-pickup" onchange="toggleAddressFields(); updatePrice();" required>
             <option value="" selected>בחר</option>
             <option value="איסוף">איסוף</option>
             <option value="משלוח">משלוח</option>
         </select>
 
-        <label>מחיר:</label>
-        <select name="paybox-amount" id="price" required>
+        <label>כמה שולם בפייבוקס:</label>
+        <select name="כמה שולם בפייבוקס" id="price" required>
             <option value="" selected>בחר</option>
             <option value="50">50</option>
             <option value="100">100</option>
@@ -172,10 +172,10 @@
             </div>
         </div>
 
-        <input type="hidden" name="shipping-address" id="shipping-address">
+        <input type="hidden" name="כתובת למשלוח" id="shipping-address">
 
         <label>שולם על ידי:</label>
-        <select name="paid-by" id="paid-by" onchange="togglePayboxName()" required>
+        <select name="שולם על ידי" id="paid-by" onchange="togglePayboxName()" required>
             <option value="" selected>בחר</option>
             <option value="אני שילמתי">אני שילמתי</option>
             <option value="שולם על ידי מישהו אחר">שולם על ידי מישהו אחר</option>
@@ -183,14 +183,14 @@
 
         <div id="paybox-name-field">
             <label>השם פייבוקס ששולם על ידו:</label>
-            <input type="text" name="paybox-name" id="paybox-name">
+            <input type="text" name="שם פייבוקס" id="paybox-name">
         </div>
 
         <label>טלפון:</label>
-        <input type="tel" name="phone" required>
+        <input type="tel" name="טלפון" required>
 
         <label>הערות:</label>
-        <textarea name="notes"></textarea>
+        <textarea name="הערות"></textarea>
 
         <input type="submit" value="שלח הזמנה">
     </form>
@@ -236,12 +236,12 @@
         }
 
         function validateForm() {
-            var fullName = document.getElementsByName("full-name")[0].value;
-            var stickerQuantity = document.getElementsByName("sticker-quantity")[0].value;
-            var payboxAmount = document.getElementsByName("paybox-amount")[0].value;
+            var fullName = document.getElementsByName("שם מלא")[0].value;
+            var stickerQuantity = document.getElementsByName("כמות מדבקות")[0].value;
+            var payboxAmount = document.getElementsByName("כמה שולם בפייבוקס")[0].value;
             var shippingPickup = document.getElementById("shipping-pickup").value;
             var paidBy = document.getElementById("paid-by").value;
-            var phone = document.getElementsByName("phone")[0].value;
+            var phone = document.getElementsByName("טלפון")[0].value;
             var payboxName = document.getElementById("paybox-name") ? document.getElementById("paybox-name").value : "";
 
             if (!fullName || !stickerQuantity || !payboxAmount || !shippingPickup || !paidBy || !phone) {
