@@ -160,8 +160,8 @@
         <a href="[PAYBOX_LINK_3]" target="_blank">אפשרות פייבוקס 3</a>
     </div>
 
-    <h1>הזמנת חולצות</h1>
-    <p>מלאו את הטופס להזמנה</p>
+    <h1>הזמנת חולצות - לה פמיליה קז'ואל</h1>
+    <p>מלאו את הטופס אחרי שביצעתם תשלום</p>
 
     <form action="https://script.google.com/macros/s/AKfycbyhQZFUPTJJiZAW05n1Qfp1rSBOzJWm1SJ-BNj4NqruD3hLNjB-m5-o7zoNgyDsIQil/exec" method="POST" onsubmit="return validateAndConfirm()">
         <label>שם מלא:</label>
@@ -180,7 +180,7 @@
                     <option value="XXL">XXL</option>
                     <option value="XXXL">XXXL</option>
                 </select>
-                <span>50</span>
+                <span>מחיר יחידה: 50</span>
                 <button type="button" class="icon-btn" onclick="addShirt(this)">+</button>
                 <button type="button" class="icon-btn" onclick="removeShirt(this)">🗑️</button>
             </div>
@@ -231,7 +231,7 @@
         </select>
 
         <div id="paybox-name-field">
-            <label>השם פייבוקס ששולם על ידו:</label>
+            <label>השם פייבוקס שביצע תשלום:</label>
             <input type="text" name="שם פייבוקס" id="paybox-name">
         </div>
 
@@ -246,7 +246,7 @@
 
     <script>
         let confirmed = false;
-        const SHIRT_BASE_PRICE = 50;
+        const SHIRT_BASE_PRICE = 100;
 
         function toggleAddressFields() {
             var select = document.getElementById("shipping-pickup");
@@ -341,7 +341,7 @@
             }
 
             if (paidBy === "שולם על ידי מישהו אחר" && !payboxName) {
-                alert("אנא מלא את שם הפייבוקס ששולם על ידו");
+                alert("אנא מלא את שם הפייבוקס שביצע תשלום");
                 return false;
             }
 
@@ -351,7 +351,7 @@
         function validateAndConfirm() {
             if (!confirmed) {
                 if (validateForm()) {
-                    alert("שים לב!\n- נא לוודא שמילאת את כל הפרטים עבור ההזמנה\n- נא לוודא שהתשלום בוצע לפני שליחת ההזמנה\nלא ניתן יהיה לבצע שינויים.");
+                    alert("שים לב!\n- נא לוודא שמילאת את כל הפרטים עבור ההזמנה\n- נא לוודא שהתשלום בוצע לפני שליחת ההזמנה\nלא ניתן יהיה לבצע שינויים בהזמנה לאחר השליחה.\nהזמנה שתישלם ללא תשלום תבוטל מיידית\nתודה על ההזמנה - ניפגש ביציע!");
                     confirmed = true;
                 }
                 return false;
