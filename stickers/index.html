@@ -127,7 +127,7 @@
         <input type="text" name="שם מלא" required>
 
         <label>כמות מדבקות:</label>
-        <select name="כמות מדבקות" required>
+        <select name="כמות מדבקות" id="quantity" onchange="updatePrice()" required>
             <option value="" selected>בחר</option>
             <option value="500">500</option>
             <option value="1000">1000</option>
@@ -144,9 +144,6 @@
         <label>כמה שולם בפייבוקס:</label>
         <select name="כמה שולם בפייבוקס" id="price" required>
             <option value="" selected>בחר</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-            <option value="150">150</option>
         </select>
 
         <div id="address-fields">
@@ -197,6 +194,7 @@
 
     <script>
         let confirmed = false;
+        const STICKER_BASE_PRICES = { "500": 50, "1000": 100, "1500": 150 };
 
         function toggleAddressFields() {
             var select = document.getElementById("shipping-pickup");
@@ -212,13 +210,15 @@
 
         function updatePrice() {
             var shipping = document.getElementById("shipping-pickup").value;
+            var quantity = document.getElementById("quantity").value;
             var priceSelect = document.getElementById("price");
-            var basePrices = [50, 100, 150]; // Update these as needed
-            priceSelect.innerHTML = '<option value="" selected>בחר</option>';
-            basePrices.forEach(price => {
-                var totalPrice = shipping === "משלוח" ? price + 28 : price;
-                priceSelect.innerHTML += `<option value="${totalPrice}">${totalPrice}</option>`;
-            });
+            if (quantity && STICKER_BASE_PRICES[quantity]) {
+                var basePrice = STICKER_BASE_PRICES[quantity];
+                var totalPrice = shipping === "משלוח" ? basePrice + 28 : basePrice;
+                priceSelect.innerHTML = `<option value="${totalPrice}" selected>${totalPrice}</option>`;
+            } else {
+                priceSelect.innerHTML = '<option value="" selected>בחר</option>';
+            }
         }
 
         function combineAddress() {
@@ -271,7 +271,11 @@
         function validateAndConfirm() {
             if (!confirmed) {
                 if (validateForm()) {
-                    alert("שים לב!\n- נא לוודא שמילאת את כל הפרטים עבור ההזמנה\n- נא לוודא שהתשלום בוצע לפני שליחת ההזמנה\nלא ניתן יהיה לבצע שינויים.");
+                    alert("⚠️ שימו לב! ⚠️\n\n" +
+                          "• יש לוודא שמילאתם את כל פרטי ההזמנה\n" +
+                          "• יש לוודא שביצעתם תשלום בפייבוקס לפני השליחה\n" +
+                          "• לא ניתן יהיה לבצע שינויים לאחר השליחה\n\n" +
+                          "לחצו 'אישור' ולאחר מכן 'שלח הזמנה' שוב לאישור סופי.");
                     confirmed = true;
                 }
                 return false;
