@@ -88,6 +88,7 @@
             padding: 10px;
             border-radius: 5px;
             margin-bottom: 5px;
+            flex-wrap: wrap; /* Allow wrapping if needed */
         }
         .shirt-entry label {
             margin: 0 10px 0 0;
@@ -95,6 +96,7 @@
         }
         .shirt-entry select {
             flex: 1;
+            min-width: 100px; /* Ensure select doesn’t shrink too much */
         }
         .shirt-entry span {
             margin: 0 10px;
@@ -108,6 +110,8 @@
             font-size: 1.2em;
             color: #ffeb3b;
             margin: 0 5px;
+            padding: 5px; /* Add padding for better spacing */
+            flex-shrink: 0; /* Prevent shrinking */
         }
         .icon-btn:hover {
             color: #ffd700;
@@ -120,7 +124,7 @@
             flex: 1;
         }
         .logo {
-            max-width: 100px;
+            max-width: 80px; /* Reduced from 100px */
             display: block;
             margin: 0 auto 20px;
         }
@@ -142,11 +146,26 @@
                 flex-direction: column;
             }
             .shirt-entry {
-                flex-direction: column;
-                align-items: flex-start;
+                flex-direction: row; /* Keep row layout */
+                align-items: center;
+                justify-content: space-between; /* Space out items */
+                padding: 5px; /* Reduce padding for smaller screens */
             }
             .shirt-entry label {
-                margin: 0 0 5px;
+                margin: 0 5px 0 0; /* Adjust margin */
+                flex: 0 0 50px; /* Slightly smaller for mobile */
+            }
+            .shirt-entry select {
+                flex: 1;
+                margin: 5px 0; /* Add vertical spacing if wrapped */
+            }
+            .shirt-entry span {
+                margin: 0 5px;
+                flex: 0 0 30px; /* Adjust for mobile */
+            }
+            .icon-btn {
+                margin: 0 2px; /* Tighten horizontal spacing */
+                padding: 3px; /* Adjust padding */
             }
         }
     </style>
@@ -182,7 +201,7 @@
                 </select>
                 <span>50</span>
                 <button type="button" class="icon-btn" onclick="addShirt(this)">+</button>
-                <button type="button" class="icon-btn" onclick="removeShirt(this)">-</button>
+                <button type="button" class="icon-btn" onclick="removeShirt(this)">🗑️</button>
             </div>
         </div>
 
