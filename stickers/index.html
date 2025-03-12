@@ -152,6 +152,15 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
+        .price-confirm {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .price-confirm input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
         @keyframes spin {
             0% { transform: translate(-50%, -50%) rotate(0deg); }
             100% { transform: translate(-50%, -50%) rotate(360deg); }
@@ -212,11 +221,12 @@
         </select>
         <div class="error-message" id="shipping-pickup-error">שדה חובה</div>
 
-        <label>כמה שולם בפייבוקס:</label>
-        <select name="כמה שולם בפייבוקס" id="price" required>
-            <option value="" selected>בחר</option>
-        </select>
-        <div class="error-message" id="price-error">שדה חובה</div>
+        <div class="price-confirm">
+            <label id="price-label">שולם בפייבוקס 0?</label>
+            <input type="checkbox" name="כמה שולם בפייבוקס" id="price-confirm" required>
+            <input type="hidden" name="כמה שולם בפייבוקס" id="price-value">
+        </div>
+        <div class="error-message" id="price-confirm-error">יש לאשר את התשלום</div>
 
         <div id="address-fields">
             <div class="address-row">
@@ -326,13 +336,19 @@
         function updatePrice() {
             var shipping = document.getElementById("shipping-pickup").value;
             var quantity = document.getElementById("quantity").value;
-            var priceSelect = document.getElementById("price");
+            var priceLabel = document.getElementById("price-label");
+            var priceValue = document.getElementById("price-value");
+            var priceConfirm = document.getElementById("price-confirm");
             if (quantity && CONFIG.STICKER_PRICES[quantity]) {
                 var basePrice = CONFIG.STICKER_PRICES[quantity];
                 var totalPrice = shipping === "משלוח" ? basePrice + CONFIG.SHIPPING_COST : basePrice;
-                priceSelect.innerHTML = `<option value="${totalPrice}" selected>${totalPrice} ₪</option>`;
+                priceLabel.textContent = `שולם בפייבוקס ${totalPrice}?`;
+                priceValue.value = totalPrice;
+                priceConfirm.checked = false; // Reset checkbox
             } else {
-                priceSelect.innerHTML = '<option value="" selected>בחר</option>';
+                priceLabel.textContent = "שולם בפייבוקס 0?";
+                priceValue.value = "";
+                priceConfirm.checked = false;
             }
         }
 
@@ -367,7 +383,7 @@
         }
 
         function validateField(field) {
-            var value = field.value.trim();
+            var value = field.type === "checkbox" ? field.checked : field.value.trim();
             var error = document.getElementById(field.id + "-error");
             var isValid = true;
 
@@ -385,7 +401,7 @@
         }
 
         function validateForm() {
-            var fields = ["full-name", "quantity", "shipping-pickup", "price", "paid-by", "phone"];
+            var fields = ["full-name", "quantity", "shipping-pickup", "price-confirm", "paid-by", "phone"];
             if (document.getElementById("shipping-pickup").value === "משלוח") {
                 fields.push("city", "street", "apartment-number", "zip-code");
             }
@@ -422,6 +438,7 @@
             spinner.style.display = "block";
             var form = document.forms[0];
             var data = new FormData(form);
+            data.set("כמה שולם בפייבוקס", document.getElementById("price-value").value);
 
             fetch(CONFIG.SCRIPT_URL, {
                 method: "POST",
