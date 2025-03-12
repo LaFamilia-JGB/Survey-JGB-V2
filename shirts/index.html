@@ -86,16 +86,18 @@
             display: none;
         }
         .payment-options {
-            text-align: center;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
             margin-bottom: 20px;
         }
         .payment-options a {
-            display: inline-block;
             background-color: #ffeb3b;
             color: #000;
-            padding: 15px 25px;
-            margin: 0 10px;
-            border-radius: 25px;
+            padding: 15px;
+            width: 100px;
+            text-align: center;
+            border-radius: 5px;
             text-decoration: none;
             font-weight: bold;
             transition: background-color 0.3s;
@@ -114,6 +116,7 @@
             border-radius: 5px;
             margin-bottom: 5px;
             flex-wrap: wrap;
+            gap: 10px;
         }
         .shirt-entry label {
             margin: 0 10px 0 0;
@@ -123,23 +126,23 @@
             flex: 1;
             min-width: 100px;
         }
-        .shirt-entry span {
-            margin: 0 10px;
-            color: #ffeb3b;
-            flex: 0 0 40px;
-        }
         .icon-btn {
             background: none;
-            border: none;
+            border: 1px solid #ffeb3b;
             cursor: pointer;
             font-size: 1.2em;
             color: #ffeb3b;
-            margin: 0 5px;
-            padding: 5px;
-            flex-shrink: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s, color 0.3s;
         }
         .icon-btn:hover {
-            color: #ffd700;
+            background-color: #ffeb3b;
+            color: #000;
         }
         .address-row {
             display: flex;
@@ -202,9 +205,12 @@
             p {
                 font-size: 1em;
             }
+            .payment-options {
+                flex-direction: column;
+                gap: 10px;
+            }
             .payment-options a {
-                display: block;
-                margin: 10px 0;
+                width: 100%;
             }
             .address-row {
                 flex-direction: column;
@@ -215,7 +221,6 @@
             .shirt-entry {
                 flex-direction: row;
                 align-items: center;
-                justify-content: space-between;
                 padding: 5px;
             }
             .shirt-entry label {
@@ -226,13 +231,9 @@
                 flex: 1;
                 margin: 5px 0;
             }
-            .shirt-entry span {
-                margin: 0 5px;
-                flex: 0 0 30px;
-            }
             .icon-btn {
-                margin: 0 2px;
-                padding: 3px;
+                width: 25px;
+                height: 25px;
             }
         }
     </style>
@@ -243,11 +244,7 @@
         <h1>הזמנת חולצות - לה פמיליה - צובעים את ירושלים!</h1>
     </header>
 
-    <div class="payment-options">
-        <a href="[PAYBOX_LINK_1]" target="_blank">אפשרות פייבוקס 1</a>
-        <a href="[PAYBOX_LINK_2]" target="_blank">אפשרות פייבוקס 2</a>
-        <a href="[PAYBOX_LINK_3]" target="_blank">אפשרות פייבוקס 3</a>
-    </div>
+    <div class="payment-options" id="payment-options"></div>
 
     <p>מלאו את הטופס אחרי שביצעתם תשלום בפייבוקס</p>
 
@@ -257,7 +254,7 @@
         <input type="text" name="שם מלא" id="full-name" required onblur="validateField(this)">
         <div class="error-message" id="full-name-error">שדה חובה</div>
 
-        <div class="shirt-sizes">
+        <div class="shirt-sizes" id="shirt-sizes">
             <div class="shirt-entry">
                 <label>מידה:</label>
                 <select name="מידה" required onchange="validateField(this)">
@@ -272,7 +269,7 @@
                 </select>
                 <div class="error-message" id="size-error">שדה חובה</div>
                 <button type="button" class="icon-btn" onclick="addShirt(this)">+</button>
-                <button type="button" class="icon-btn" onclick="removeShirt(this)">🗑️</button>
+                <button type="button" class="icon-btn" onclick="removeShirt(this)">-</button>
             </div>
         </div>
 
@@ -351,9 +348,32 @@
     </form>
 
     <script>
+        // Configurable Parameters
+        const CONFIG = {
+            SHIRT_PRICE: 50,
+            SHIPPING_COST: 28,
+            PAYBOX_LINKS: [
+                { label: "אפשרות 1", url: "[PAYBOX_LINK_1]" },
+                { label: "אפשרות 2", url: hinein"[PAYBOX_LINK_2]" },
+                { label: "אפשרות 3", url: "[PAYBOX_LINK_3]" }
+            ],
+            LOGO_URL: "https://lafamilia-jgb.github.io/Merch-JGB/images/logo.png",
+            BACKGROUND_URL: "https://lafamilia-jgb.github.io/Merch-JGB/images/background.png",
+            SHIRT_SIZES: ["XS", "S", "M", "L", "XL", "XXL", "XXXL"],
+            SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyhQZFUPTJJiZAW05n1Qfp1rSBOzJWm1SJ-BNj4NqruD3hLNjB-m5-o7zoNgyDsIQil/exec"
+        };
+
         let confirmed = false;
-        const SHIRT_BASE_PRICE = 50;
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhQZFUPTJJiZAW05n1Qfp1rSBOzJWm1SJ-BNj4NqruD3hLNjB-m5-o7zoNgyDsIQil/exec";
+
+        // Initialize Payment Options
+        document.addEventListener("DOMContentLoaded", () => {
+            const paymentDiv = document.getElementById("payment-options");
+            paymentDiv.innerHTML = CONFIG.PAYBOX_LINKS.map(link => 
+                `<a href="${link.url}" target="_blank">${link.label}</a>`
+            ).join("");
+            document.querySelector(".logo").src = CONFIG.LOGO_URL;
+            document.body.style.backgroundImage = `url(${CONFIG.BACKGROUND_URL})`;
+        });
 
         function toggleAddressFields() {
             var select = document.getElementById("shipping-pickup");
@@ -370,25 +390,18 @@
         }
 
         function addShirt(button) {
-            var container = document.querySelector(".shirt-sizes");
+            var container = document.getElementById("shirt-sizes");
             var newEntry = document.createElement("div");
             newEntry.className = "shirt-entry";
             newEntry.innerHTML = `
                 <label>מידה:</label>
                 <select name="מידה" required onchange="validateField(this)">
                     <option value="" selected>בחר</option>
-                    <option value="XS">XS</option>
-                    <option value="S">S</option>
-                    <option value="M">M</option>
-                    <option value="L">L</option>
-                    <option value="XL">XL</option>
-                    <option value="XXL">XXL</option>
-                    <option value="XXXL">XXXL</option>
+                    ${CONFIG.SHIRT_SIZES.map(size => `<option value="${size}">${size}</option>`).join("")}
                 </select>
                 <div class="error-message" id="size-error">שדה חובה</div>
-                <span>${SHIRT_BASE_PRICE}</span>
                 <button type="button" class="icon-btn" onclick="addShirt(this)">+</button>
-                <button type="button" class="icon-btn" onclick="removeShirt(this)">🗑️</button>
+                <button type="button" class="icon-btn" onclick="removeShirt(this)">-</button>
             `;
             container.appendChild(newEntry);
             updatePrice();
@@ -406,9 +419,9 @@
             var shipping = document.getElementById("shipping-pickup").value;
             var priceSelect = document.getElementById("price");
             var shirtCount = document.getElementsByName("מידה").length;
-            var basePrice = SHIRT_BASE_PRICE * shirtCount;
-            var totalPrice = shipping === "משלוח" ? basePrice + 28 : basePrice;
-            priceSelect.innerHTML = `<option value="${totalPrice}" selected>${totalPrice}</option>`;
+            var basePrice = CONFIG.SHIRT_PRICE * shirtCount;
+            var totalPrice = shipping === "משלוח" ? basePrice + CONFIG.SHIPPING_COST : basePrice;
+            priceSelect.innerHTML = `<option value="${totalPrice}" selected>${totalPrice} ₪</option>`;
         }
 
         function combineAddress() {
@@ -478,10 +491,12 @@
             if (!confirmed) {
                 if (validateForm()) {
                     alert("⚠️ שימו לב! ⚠️\n\n" +
-                          "• יש לוודא שמילאתם את כל פרטי ההזמנה\n" +
-                          "• יש לוודא שביצעתם תשלום בפייבוקס לפני השליחה\n" +
-                          "• לא ניתן יהיה לבצע שינויים לאחר השליחה\n\n" +
-                          "לחצו 'אישור' ולאחר מכן 'שלח הזמנה' שוב לאישור סופי.");
+                          "• נא וודאו כי מילאתם את כל פרטי ההזמנה\n" +
+                          "• נא וודאו שביצעתם תשלום בפייבוקס לפני שליחת טופס זה\n" +
+                          "• לא ניתן לבצע שינויים לאחר שליחת הטופס\n" +
+                          "• איסוף יתבצע במשחקי הקבוצה, יש לעקוב אחר הפרסומים בדף האינסטגרם\n" +
+                          "• מעקב משלוחים - בעת שליחת המוצרים תקבלו הודעה המכילה מספר מעקב על החבילה\n" +
+                          "• לחצו 'אישור' ולאחר מכן 'שלח הזמנה' - לקבלת אישור סופי");
                     confirmed = true;
                 }
                 return false;
@@ -501,7 +516,7 @@
 
             Promise.all(sizes.map(size => {
                 data.set("מידה", size);
-                return fetch(SCRIPT_URL, {
+                return fetch(CONFIG.SCRIPT_URL, {
                     method: "POST",
                     body: data
                 }).then(response => {
