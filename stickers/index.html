@@ -90,17 +90,20 @@
             justify-content: center;
             gap: 10px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
         .payment-options a {
             background-color: #ffeb3b;
             color: #000;
-            padding: 15px;
-            width: 100px;
+            padding: 10px 15px;
             text-align: center;
             border-radius: 5px;
             text-decoration: none;
             font-weight: bold;
             transition: background-color 0.3s;
+            flex: 1 1 100px;
+            max-width: 100px;
+            box-sizing: border-box;
         }
         .payment-options a:hover {
             background-color: #ffd700;
@@ -156,10 +159,25 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            margin: 10px 0;
         }
-        .price-confirm input[type="checkbox"] {
-            width: auto;
-            margin: 0;
+        .price-confirm button {
+            background: #333;
+            border: 2px solid #ffeb3b;
+            color: #ffeb3b;
+            padding: 8px 15px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .price-confirm button.active {
+            background: #ffeb3b;
+            color: #000;
+            box-shadow: 0 0 10px rgba(255, 235, 59, 0.5);
+        }
+        .price-confirm button:hover:not(.active) {
+            background: #555;
         }
         @keyframes spin {
             0% { transform: translate(-50%, -50%) rotate(0deg); }
@@ -180,13 +198,8 @@
                 gap: 10px;
             }
             .payment-options a {
-                width: 100%;
-            }
-            .address-row {
-                flex-direction: column;
-            }
-            .street-container {
-                flex-direction: row;
+                max-width: 100%;
+                flex: 1 1 auto;
             }
         }
     </style>
@@ -222,9 +235,10 @@
         <div class="error-message" id="shipping-pickup-error">שדה חובה</div>
 
         <div class="price-confirm">
-            <label id="price-label">שולם בפייבוקס 0?</label>
-            <input type="checkbox" name="כמה שולם בפייבוקס" id="price-confirm" required>
+            <label id="price-label">אנא אשר תשלום בפייבוקס על סך 0</label>
+            <button type="button" id="price-confirm-btn" onclick="togglePriceConfirm()">אישור</button>
             <input type="hidden" name="כמה שולם בפייבוקס" id="price-value">
+            <input type="hidden" id="price-confirmed" value="false">
         </div>
         <div class="error-message" id="price-confirm-error">יש לאשר את התשלום</div>
 
@@ -338,18 +352,29 @@
             var quantity = document.getElementById("quantity").value;
             var priceLabel = document.getElementById("price-label");
             var priceValue = document.getElementById("price-value");
-            var priceConfirm = document.getElementById("price-confirm");
+            var priceConfirmBtn = document.getElementById("price-confirm-btn");
+            var priceConfirmed = document.getElementById("price-confirmed");
             if (quantity && CONFIG.STICKER_PRICES[quantity]) {
                 var basePrice = CONFIG.STICKER_PRICES[quantity];
                 var totalPrice = shipping === "משלוח" ? basePrice + CONFIG.SHIPPING_COST : basePrice;
-                priceLabel.textContent = `שולם בפייבוקס ${totalPrice}?`;
+                priceLabel.textContent = `אנא אשר תשלום בפייבוקס על סך ${totalPrice}`;
                 priceValue.value = totalPrice;
-                priceConfirm.checked = false; // Reset checkbox
+                priceConfirmBtn.classList.remove("active");
+                priceConfirmed.value = "false";
             } else {
-                priceLabel.textContent = "שולם בפייבוקס 0?";
+                priceLabel.textContent = "אנא אשר תשלום בפייבוקס על סך 0";
                 priceValue.value = "";
-                priceConfirm.checked = false;
+                priceConfirmBtn.classList.remove("active");
+                priceConfirmed.value = "false";
             }
+        }
+
+        function togglePriceConfirm() {
+            var priceConfirmBtn = document.getElementById("price-confirm-btn");
+            var priceConfirmed = document.getElementById("price-confirmed");
+            priceConfirmBtn.classList.toggle("active");
+            priceConfirmed.value = priceConfirmBtn.classList.contains("active") ? "true" : "false";
+            validateField({ id: "price-confirmed", required: true, value: priceConfirmed.value });
         }
 
         function combineAddress() {
@@ -383,11 +408,11 @@
         }
 
         function validateField(field) {
-            var value = field.type === "checkbox" ? field.checked : field.value.trim();
+            var value = field.value ? field.value.trim() : field.value;
             var error = document.getElementById(field.id + "-error");
             var isValid = true;
 
-            if (field.required && !value) {
+            if (field.required && (!value || value === "false")) {
                 isValid = false;
             } else if (field.id === "paybox-name" && document.getElementById("paid-by").value === "שולם על ידי מישהו אחר" && !value) {
                 isValid = false;
@@ -395,13 +420,17 @@
                 isValid = false;
             }
 
-            field.classList.toggle("invalid", !isValid);
+            if (field.id === "price-confirmed") {
+                document.getElementById("price-confirm-btn").classList.toggle("invalid", !isValid);
+            } else {
+                field.classList.toggle("invalid", !isValid);
+            }
             if (error) error.style.display = isValid ? "none" : "block";
             return isValid;
         }
 
         function validateForm() {
-            var fields = ["full-name", "quantity", "shipping-pickup", "price-confirm", "paid-by", "phone"];
+            var fields = ["full-name", "quantity", "shipping-pickup", "price-confirmed", "paid-by", "phone"];
             if (document.getElementById("shipping-pickup").value === "משלוח") {
                 fields.push("city", "street", "apartment-number", "zip-code");
             }
