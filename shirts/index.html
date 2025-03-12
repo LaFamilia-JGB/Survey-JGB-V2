@@ -278,7 +278,7 @@
 <body>
     <header>
         <img src="https://lafamilia-jgb.github.io/Merch-JGB/images/logo.png" alt="Beitar Jerusalem Logo" class="logo">
-        <h1>הזמנת חולצות קז'ואל - LA FAMILIA - JGB!</h1>
+        <h1>הזמנת חולצות - לה פמיליה - צובעים את ירושלים!</h1>
     </header>
 
     <div class="payment-options" id="payment-options"></div>
@@ -569,11 +569,17 @@
             spinner.style.display = "block";
             var form = document.forms[0];
             var sizes = Array.from(document.getElementsByName("מידה")).map(s => s.value);
+            var totalPrice = parseInt(document.getElementById("price-value").value) || 0;
+            var shirtCount = sizes.length;
+            var pricePerShirt = shirtCount > 0 ? Math.round(totalPrice / shirtCount) : 0;
             var data = new FormData(form);
-            data.set("כמה שולם בפייבוקס", document.getElementById("price-value").value);
+            var paidBy = document.getElementById("paid-by").value;
+            var payboxName = document.getElementById("paybox-name").value || "";
+            data.set("שולם על ידי", paidBy === "שולם על ידי מישהו אחר" ? payboxName : "אני שילמתי");
 
             Promise.all(sizes.map(size => {
                 data.set("מידה", size);
+                data.set("כמה שולם בפייבוקס", pricePerShirt);
                 return fetch(CONFIG.SCRIPT_URL, {
                     method: "POST",
                     body: data
