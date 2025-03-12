@@ -86,16 +86,18 @@
             display: none;
         }
         .payment-options {
-            text-align: center;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
             margin-bottom: 20px;
         }
         .payment-options a {
-            display: inline-block;
             background-color: #ffeb3b;
             color: #000;
-            padding: 15px 25px;
-            margin: 0 10px;
-            border-radius: 25px;
+            padding: 15px;
+            width: 100px;
+            text-align: center;
+            border-radius: 5px;
             text-decoration: none;
             font-weight: bold;
             transition: background-color 0.3s;
@@ -164,9 +166,12 @@
             p {
                 font-size: 1em;
             }
+            .payment-options {
+                flex-direction: column;
+                gap: 10px;
+            }
             .payment-options a {
-                display: block;
-                margin: 10px 0;
+                width: 100%;
             }
             .address-row {
                 flex-direction: column;
@@ -183,11 +188,7 @@
         <h1>הזמנת מדבקות - לה פמיליה - צובעים את ירושלים!</h1>
     </header>
 
-    <div class="payment-options">
-        <a href="[PAYBOX_LINK_1]" target="_blank">אפשרות פייבוקס 1</a>
-        <a href="[PAYBOX_LINK_2]" target="_blank">אפשרות פייבוקס 2</a>
-        <a href="[PAYBOX_LINK_3]" target="_blank">אפשרות פייבוקס 3</a>
-    </div>
+    <div class="payment-options" id="payment-options"></div>
 
     <p>מלאו את הטופס אחרי שביצעתם תשלום בפייבוקס</p>
 
@@ -200,9 +201,6 @@
         <label>כמות מדבקות:</label>
         <select name="כמות מדבקות" id="quantity" onchange="updatePrice(); validateField(this)" required>
             <option value="" selected>בחר</option>
-            <option value="500">500</option>
-            <option value="1000">1000</option>
-            <option value="1500">1500</option>
         </select>
         <div class="error-message" id="quantity-error">שדה חובה</div>
 
@@ -281,9 +279,35 @@
     </form>
 
     <script>
+        // Configurable Parameters
+        const CONFIG = {
+            STICKER_PRICES: { "500": 50, "1000": 100, "1500": 150 },
+            SHIPPING_COST: 28,
+            PAYBOX_LINKS: [
+                { label: "אפשרות 1", url: "[PAYBOX_LINK_1]" },
+                { label: "אפשרות 2", url: "[PAYBOX_LINK_2]" },
+                { label: "אפשרות 3", url: "[PAYBOX_LINK_3]" }
+            ],
+            LOGO_URL: "https://lafamilia-jgb.github.io/Merch-JGB/images/logo.png",
+            BACKGROUND_URL: "https://lafamilia-jgb.github.io/Merch-JGB/images/background.png",
+            STICKER_QUANTITIES: ["500", "1000", "1500"],
+            SCRIPT_URL: "https://script.google.com/macros/s/AKfycby3LeEQGjzKUjehE_xKsOD_qbZqvMe4Bwh5zbhqsOGUUoqJTiTYkZl9RYd_k_ImipExhg/exec"
+        };
+
         let confirmed = false;
-        const STICKER_BASE_PRICES = { "500": 50, "1000": 100, "1500": 150 };
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3LeEQGjzKUjehE_xKsOD_qbZqvMe4Bwh5zbhqsOGUUoqJTiTYkZl9RYd_k_ImipExhg/exec";
+
+        // Initialize Payment Options
+        document.addEventListener("DOMContentLoaded", () => {
+            const paymentDiv = document.getElementById("payment-options");
+            paymentDiv.innerHTML = CONFIG.PAYBOX_LINKS.map(link => 
+                `<a href="${link.url}" target="_blank">${link.label}</a>`
+            ).join("");
+            document.querySelector(".logo").src = CONFIG.LOGO_URL;
+            document.body.style.backgroundImage = `url(${CONFIG.BACKGROUND_URL})`;
+            const quantitySelect = document.getElementById("quantity");
+            quantitySelect.innerHTML = `<option value="" selected>בחר</option>` + 
+                CONFIG.STICKER_QUANTITIES.map(q => `<option value="${q}">${q}</option>`).join("");
+        });
 
         function toggleAddressFields() {
             var select = document.getElementById("shipping-pickup");
@@ -303,10 +327,10 @@
             var shipping = document.getElementById("shipping-pickup").value;
             var quantity = document.getElementById("quantity").value;
             var priceSelect = document.getElementById("price");
-            if (quantity && STICKER_BASE_PRICES[quantity]) {
-                var basePrice = STICKER_BASE_PRICES[quantity];
-                var totalPrice = shipping === "משלוח" ? basePrice + 28 : basePrice;
-                priceSelect.innerHTML = `<option value="${totalPrice}" selected>${totalPrice}</option>`;
+            if (quantity && CONFIG.STICKER_PRICES[quantity]) {
+                var basePrice = CONFIG.STICKER_PRICES[quantity];
+                var totalPrice = shipping === "משלוח" ? basePrice + CONFIG.SHIPPING_COST : basePrice;
+                priceSelect.innerHTML = `<option value="${totalPrice}" selected>${totalPrice} ₪</option>`;
             } else {
                 priceSelect.innerHTML = '<option value="" selected>בחר</option>';
             }
@@ -377,10 +401,12 @@
             if (!confirmed) {
                 if (validateForm()) {
                     alert("⚠️ שימו לב! ⚠️\n\n" +
-                          "• יש לוודא שמילאתם את כל פרטי ההזמנה\n" +
-                          "• יש לוודא שביצעתם תשלום בפייבוקס לפני השליחה\n" +
-                          "• לא ניתן יהיה לבצע שינויים לאחר השליחה\n\n" +
-                          "לחצו 'אישור' ולאחר מכן 'שלח הזמנה' שוב לאישור סופי.");
+                          "• נא וודאו כי מילאתם את כל פרטי ההזמנה\n" +
+                          "• נא וודאו שביצעתם תשלום בפייבוקס לפני שליחת טופס זה\n" +
+                          "• לא ניתן לבצע שינויים לאחר שליחת הטופס\n" +
+                          "• איסוף יתבצע במשחקי הקבוצה, יש לעקוב אחר הפרסומים בדף האינסטגרם\n" +
+                          "• מעקב משלוחים - בעת שליחת המוצרים תקבלו הודעה המכילה מספר מעקב על החבילה\n" +
+                          "• לחצו 'אישור' ולאחר מכן 'שלח הזמנה' - לקבלת אישור סופי");
                     confirmed = true;
                 }
                 return false;
@@ -397,7 +423,7 @@
             var form = document.forms[0];
             var data = new FormData(form);
 
-            fetch(SCRIPT_URL, {
+            fetch(CONFIG.SCRIPT_URL, {
                 method: "POST",
                 body: data
             }).then(response => {
