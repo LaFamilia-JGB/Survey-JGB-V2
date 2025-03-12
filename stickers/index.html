@@ -133,7 +133,7 @@
         }
         #apartment-number, #zip-code {
             flex: 0 0 80px;
-            width: 105px;
+            width: 80px;
         }
         #address-preview {
             width: 100%;
@@ -222,7 +222,7 @@
 <body>
     <header>
         <img src="https://lafamilia-jgb.github.io/Merch-JGB/images/logo.png" alt="Beitar Jerusalem Logo" class="logo">
-        <h1>הזמנת מדבקות - LA FAMILIA - JGB!</h1>
+        <h1>הזמנת מדבקות - לה פמיליה - צובעים את ירושלים!</h1>
     </header>
 
     <div class="payment-options" id="payment-options"></div>
@@ -482,6 +482,9 @@
             spinner.style.display = "block";
             var form = document.forms[0];
             var data = new FormData(form);
+            var paidBy = document.getElementById("paid-by").value;
+            var payboxName = document.getElementById("paybox-name").value || "";
+            data.set("שולם על ידי", paidBy === "שולם על ידי מישהו אחר" ? payboxName : "אני שילמתי");
             data.set("כמה שולם בפייבוקס", document.getElementById("price-value").value);
 
             fetch(CONFIG.SCRIPT_URL, {
