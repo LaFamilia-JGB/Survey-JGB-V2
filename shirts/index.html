@@ -191,6 +191,15 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
+        .price-confirm {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .price-confirm input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
         @keyframes spin {
             0% { transform: translate(-50%, -50%) rotate(0deg); }
             100% { transform: translate(-50%, -50%) rotate(360deg); }
@@ -257,7 +266,7 @@
         <div class="shirt-sizes" id="shirt-sizes">
             <div class="shirt-entry">
                 <label>מידה:</label>
-                <select name="מידה" required onchange="validateField(this)">
+                <select name="מידה" required onchange="validateField(this); updatePrice()">
                     <option value="" selected>בחר</option>
                     <option value="XS">XS</option>
                     <option value="S">S</option>
@@ -281,11 +290,12 @@
         </select>
         <div class="error-message" id="shipping-pickup-error">שדה חובה</div>
 
-        <label>כמה שולם בפייבוקס:</label>
-        <select name="כמה שולם בפייבוקס" id="price" required>
-            <option value="" selected>בחר</option>
-        </select>
-        <div class="error-message" id="price-error">שדה חובה</div>
+        <div class="price-confirm">
+            <label id="price-label">שולם בפייבוקס 0?</label>
+            <input type="checkbox" name="כמה שולם בפייבוקס" id="price-confirm" required>
+            <input type="hidden" name="כמה שולם בפייבוקס" id="price-value">
+        </div>
+        <div class="error-message" id="price-confirm-error">יש לאשר את התשלום</div>
 
         <div id="address-fields">
             <div class="address-row">
@@ -395,7 +405,7 @@
             newEntry.className = "shirt-entry";
             newEntry.innerHTML = `
                 <label>מידה:</label>
-                <select name="מידה" required onchange="validateField(this)">
+                <select name="מידה" required onchange="validateField(this); updatePrice()">
                     <option value="" selected>בחר</option>
                     ${CONFIG.SHIRT_SIZES.map(size => `<option value="${size}">${size}</option>`).join("")}
                 </select>
@@ -417,122 +427,9 @@
 
         function updatePrice() {
             var shipping = document.getElementById("shipping-pickup").value;
-            var priceSelect = document.getElementById("price");
+            var priceLabel = document.getElementById("price-label");
+            var priceValue = document.getElementById("price-value");
+            var priceConfirm = document.getElementById("price-confirm");
             var shirtCount = document.getElementsByName("מידה").length;
             var basePrice = CONFIG.SHIRT_PRICE * shirtCount;
-            var totalPrice = shipping === "משלוח" ? basePrice + CONFIG.SHIPPING_COST : basePrice;
-            priceSelect.innerHTML = `<option value="${totalPrice}" selected>${totalPrice} ₪</option>`;
-        }
-
-        function combineAddress() {
-            var select = document.getElementById("shipping-pickup");
-            var hiddenAddress = document.getElementById("shipping-address");
-            if (select.value === "משלוח") {
-                var city = document.getElementById("city").value || "";
-                var street = document.getElementById("street").value || "";
-                var houseNumber = document.getElementById("house-number").value || "";
-                var apartment = document.getElementById("apartment-number").value || "";
-                var zip = document.getElementById("zip-code").value || "";
-                hiddenAddress.value = `${city}, ${street} ${houseNumber}, דירה ${apartment}, מיקוד ${zip}`.replace(/, ,/g, ",").trim();
-            } else {
-                hiddenAddress.value = "";
-            }
-        }
-
-        function updateAddressPreview() {
-            var select = document.getElementById("shipping-pickup");
-            var preview = document.getElementById("address-preview");
-            if (select.value === "משלוח") {
-                var city = document.getElementById("city").value || "";
-                var street = document.getElementById("street").value || "";
-                var houseNumber = document.getElementById("house-number").value || "";
-                var apartment = document.getElementById("apartment-number").value || "";
-                var zip = document.getElementById("zip-code").value || "";
-                preview.value = `${city}, ${street} ${houseNumber}, דירה ${apartment}, מיקוד ${zip}`.replace(/, ,/g, ",").trim();
-            } else {
-                preview.value = "אין כתובת - איסוף עצמי";
-            }
-        }
-
-        function validateField(field) {
-            var value = field.value.trim();
-            var error = document.getElementById(field.id + "-error");
-            var isValid = true;
-
-            if (field.required && !value) {
-                isValid = false;
-            } else if (field.id === "paybox-name" && document.getElementById("paid-by").value === "שולם על ידי מישהו אחר" && !value) {
-                isValid = false;
-            } else if (document.getElementById("shipping-pickup").value === "משלוח" && ["city", "street", "apartment-number", "zip-code"].includes(field.id) && !value) {
-                isValid = false;
-            }
-
-            field.classList.toggle("invalid", !isValid);
-            if (error) error.style.display = isValid ? "none" : "block";
-            return isValid;
-        }
-
-        function validateForm() {
-            var fields = ["full-name", "shipping-pickup", "price", "paid-by", "phone"];
-            var sizes = Array.from(document.getElementsByName("מידה"));
-            var allSizesValid = sizes.every(select => validateField(select));
-            if (document.getElementById("shipping-pickup").value === "משלוח") {
-                fields.push("city", "street", "apartment-number", "zip-code");
-            }
-            if (document.getElementById("paid-by").value === "שולם על ידי מישהו אחר") {
-                fields.push("paybox-name");
-            }
-            var isValid = fields.every(id => validateField(document.getElementById(id))) && allSizesValid;
-            combineAddress();
-            return isValid;
-        }
-
-        function validateAndConfirm() {
-            if (!confirmed) {
-                if (validateForm()) {
-                    alert("⚠️ שימו לב! ⚠️\n\n" +
-                          "• נא וודאו כי מילאתם את כל פרטי ההזמנה\n" +
-                          "• נא וודאו שביצעתם תשלום בפייבוקס לפני שליחת טופס זה\n" +
-                          "• לא ניתן לבצע שינויים לאחר שליחת הטופס\n" +
-                          "• איסוף יתבצע במשחקי הקבוצה, יש לעקוב אחר הפרסומים בדף האינסטגרם\n" +
-                          "• מעקב משלוחים - בעת שליחת המוצרים תקבלו הודעה המכילה מספר מעקב על החבילה\n" +
-                          "• לחצו 'אישור' ולאחר מכן 'שלח הזמנה' - לקבלת אישור סופי");
-                    confirmed = true;
-                }
-                return false;
-            } else {
-                submitMultipleShirts();
-                confirmed = false;
-                return false;
-            }
-        }
-
-        function submitMultipleShirts() {
-            var spinner = document.getElementById("loading-spinner");
-            spinner.style.display = "block";
-            var form = document.forms[0];
-            var sizes = Array.from(document.getElementsByName("מידה")).map(s => s.value);
-            var data = new FormData(form);
-
-            Promise.all(sizes.map(size => {
-                data.set("מידה", size);
-                return fetch(CONFIG.SCRIPT_URL, {
-                    method: "POST",
-                    body: data
-                }).then(response => {
-                    if (!response.ok) throw new Error("שגיאה ברשת");
-                    return response.text();
-                });
-            })).then(results => {
-                console.log(results);
-                spinner.style.display = "none";
-                window.location.href = "https://lafamilia-jgb.github.io/Merch-JGB/confirmation.html";
-            }).catch(error => {
-                console.error("Error:", error);
-                spinner.style.display = "none";
-                alert("שגיאה בשליחת ההזמנה: " + error.message);
-            });
-        }
-    </script>
-</body>
-</html>
+            var totalPrice = shipping === "מ
