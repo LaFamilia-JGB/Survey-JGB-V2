@@ -432,4 +432,122 @@
             var priceConfirm = document.getElementById("price-confirm");
             var shirtCount = document.getElementsByName("מידה").length;
             var basePrice = CONFIG.SHIRT_PRICE * shirtCount;
-            var totalPrice = shipping === "מ
+            var totalPrice = shipping === "משלוח" ? basePrice + CONFIG.SHIPPING_COST : basePrice;
+            priceLabel.textContent = `שולם בפייבוקס ${totalPrice}?`;
+            priceValue.value = totalPrice;
+            priceConfirm.checked = false; // Reset checkbox
+        }
+
+        function combineAddress() {
+            var select = document.getElementById("shipping-pickup");
+            var hiddenAddress = document.getElementById("shipping-address");
+            if (select.value === "משלוח") {
+                var city = document.getElementById("city").value || "";
+                var street = document.getElementById("street").value || "";
+                var houseNumber = document.getElementById("house-number").value || "";
+                var apartment = document.getElementById("apartment-number").value || "";
+                var zip = document.getElementById("zip-code").value || "";
+                hiddenAddress.value = `${city}, ${street} ${houseNumber}, דירה ${apartment}, מיקוד ${zip}`.replace(/, ,/g, ",").trim();
+            } else {
+                hiddenAddress.value = "";
+            }
+        }
+
+        function updateAddressPreview() {
+            var select = document.getElementById("shipping-pickup");
+            var preview = document.getElementById("address-preview");
+            if (select.value === "משלוח") {
+                var city = document.getElementById("city").value || "";
+                var street = document.getElementById("street").value || "";
+                var houseNumber = document.getElementById("house-number").value || "";
+                var apartment = document.getElementById("apartment-number").value || "";
+                var zip = document.getElementById("zip-code").value || "";
+                preview.value = `${city}, ${street} ${houseNumber}, דירה ${apartment}, מיקוד ${zip}`.replace(/, ,/g, ",").trim();
+            } else {
+                preview.value = "אין כתובת - איסוף עצמי";
+            }
+        }
+
+        function validateField(field) {
+            var value = field.type === "checkbox" ? field.checked : field.value.trim();
+            var error = document.getElementById(field.id + "-error");
+            var isValid = true;
+
+            if (field.required && !value) {
+                isValid = false;
+            } else if (field.id === "paybox-name" && document.getElementById("paid-by").value === "שולם על ידי מישהו אחר" && !value) {
+                isValid = false;
+            } else if (document.getElementById("shipping-pickup").value === "משלוח" && ["city", "street", "apartment-number", "zip-code"].includes(field.id) && !value) {
+                isValid = false;
+            }
+
+            field.classList.toggle("invalid", !isValid);
+            if (error) error.style.display = isValid ? "none" : "block";
+            return isValid;
+        }
+
+        function validateForm() {
+            var fields = ["full-name", "shipping-pickup", "price-confirm", "paid-by", "phone"];
+            var sizes = Array.from(document.getElementsByName("מידה"));
+            var allSizesValid = sizes.every(select => validateField(select));
+            if (document.getElementById("shipping-pickup").value === "משלוח") {
+                fields.push("city", "street", "apartment-number", "zip-code");
+            }
+            if (document.getElementById("paid-by").value === "שולם על ידי מישהו אחר") {
+                fields.push("paybox-name");
+            }
+            var isValid = fields.every(id => validateField(document.getElementById(id))) && allSizesValid;
+            combineAddress();
+            return isValid;
+        }
+
+        function validateAndConfirm() {
+            if (!confirmed) {
+                if (validateForm()) {
+                    alert("⚠️ שימו לב! ⚠️\n\n" +
+                          "• נא וודאו כי מילאתם את כל פרטי ההזמנה\n" +
+                          "• נא וודאו שביצעתם תשלום בפייבוקס לפני שליחת טופס זה\n" +
+                          "• לא ניתן לבצע שינויים לאחר שליחת הטופס\n" +
+                          "• איסוף יתבצע במשחקי הקבוצה, יש לעקוב אחר הפרסומים בדף האינסטגרם\n" +
+                          "• מעקב משלוחים - בעת שליחת המוצרים תקבלו הודעה המכילה מספר מעקב על החבילה\n" +
+                          "• לחצו 'אישור' ולאחר מכן 'שלח הזמנה' - לקבלת אישור סופי");
+                    confirmed = true;
+                }
+                return false;
+            } else {
+                submitMultipleShirts();
+                confirmed = false;
+                return false;
+            }
+        }
+
+        function submitMultipleShirts() {
+            var spinner = document.getElementById("loading-spinner");
+            spinner.style.display = "block";
+            var form = document.forms[0];
+            var sizes = Array.from(document.getElementsByName("מידה")).map(s => s.value);
+            var data = new FormData(form);
+            data.set("כמה שולם בפייבוקס", document.getElementById("price-value").value);
+
+            Promise.all(sizes.map(size => {
+                data.set("מידה", size);
+                return fetch(CONFIG.SCRIPT_URL, {
+                    method: "POST",
+                    body: data
+                }).then(response => {
+                    if (!response.ok) throw new Error("שגיאה ברשת");
+                    return response.text();
+                });
+            })).then(results => {
+                console.log(results);
+                spinner.style.display = "none";
+                window.location.href = "https://lafamilia-jgb.github.io/Merch-JGB/confirmation.html";
+            }).catch(error => {
+                console.error("Error:", error);
+                spinner.style.display = "none";
+                alert("שגיאה בשליחת ההזמנה: " + error.message);
+            });
+        }
+    </script>
+</body>
+</html>
