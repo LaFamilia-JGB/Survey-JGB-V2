@@ -396,17 +396,46 @@
             }
         }
 
-       function togglePriceConfirm() {
-        var priceConfirmBtn = document.getElementById("price-confirm-btn");
-        var priceConfirmed = document.getElementById("price-confirmed");
-        priceConfirmBtn.classList.toggle("active");
-        priceConfirmBtn.classList.remove("invalid", "shake");
-        priceConfirmed.value = priceConfirmBtn.classList.contains("active") ? "true" : "false";
-        validateField({ id: "price-confirmed", required: true, value: priceConfirmed.value });
-        console.log("Price confirmed:", priceConfirmed.value); // Debug log
-    }
+        function togglePriceConfirm() {
+            var priceConfirmBtn = document.getElementById("price-confirm-btn");
+            var priceConfirmed = document.getElementById("price-confirmed");
+            priceConfirmBtn.classList.toggle("active");
+            priceConfirmBtn.classList.remove("invalid", "shake");
+            priceConfirmed.value = priceConfirmBtn.classList.contains("active") ? "true" : "false";
+            validateField({ id: "price-confirmed", required: true, value: priceConfirmed.value });
+        }
 
-    function validateField(field) {
+        function combineAddress() {
+            var select = document.getElementById("shipping-pickup");
+            var hiddenAddress = document.getElementById("shipping-address");
+            if (select.value === "משלוח") {
+                var city = document.getElementById("city").value || "";
+                var street = document.getElementById("street").value || "";
+                var houseNumber = document.getElementById("house-number").value || "";
+                var apartment = document.getElementById("apartment-number").value || "";
+                var zip = document.getElementById("zip-code").value || "";
+                hiddenAddress.value = `${city}, ${street} ${houseNumber}, דירה ${apartment}, מיקוד ${zip}`.replace(/, ,/g, ",").trim();
+            } else {
+                hiddenAddress.value = "";
+            }
+        }
+
+        function updateAddressPreview() {
+            var select = document.getElementById("shipping-pickup");
+            var preview = document.getElementById("address-preview");
+            if (select.value === "משלוח") {
+                var city = document.getElementById("city").value || "";
+                var street = document.getElementById("street").value || "";
+                var houseNumber = document.getElementById("house-number").value || "";
+                var apartment = document.getElementById("apartment-number").value || "";
+                var zip = document.getElementById("zip-code").value || "";
+                preview.value = `${city}, ${street} ${houseNumber}, דירה ${apartment}, מיקוד ${zip}`.replace(/, ,/g, ",").trim();
+            } else {
+                preview.value = "אין כתובת - איסוף עצמי";
+            }
+        }
+
+           function validateField(field) {
         var value = field.value ? field.value.trim() : field.value;
         var error = document.getElementById(field.id + "-error");
         var isValid = true;
@@ -423,9 +452,7 @@
             document.getElementById("price-confirm-btn").classList.add("invalid", "shake");
             setTimeout(() => document.getElementById("price-confirm-btn").classList.remove("shake"), 500);
         } else {
-            if (field.id !== "price-confirmed") {
-                field.classList.toggle("invalid", !isValid);
-            }
+            field.classList.toggle("invalid", !isValid);
         }
         if (error) error.style.display = isValid ? "none" : "block";
         return isValid;
@@ -446,67 +473,63 @@
             }
         });
         combineAddress();
-        console.log("Validation errors:", errors); // Debug log
         return errors.length === 0;
     }
 
     function validateAndConfirm() {
         if (!confirmed) {
-            if (!validateForm()) {
-                var errors = [];
-                var fields = ["full-name", "quantity", "shipping-pickup", "price-confirmed", "paid-by", "phone"];
-                if (document.getElementById("shipping-pickup").value === "משלוח") {
-                    fields.push("city", "street", "apartment-number", "zip-code");
+            var errors = [];
+            var fields = ["full-name", "quantity", "shipping-pickup", "price-confirmed", "paid-by", "phone"];
+            if (document.getElementById("shipping-pickup").value === "משלוח") {
+                fields.push("city", "street", "apartment-number", "zip-code");
+            }
+            if (document.getElementById("paid-by").value === "שולם על ידי מישהו אחר") {
+                fields.push("paybox-name");
+            }
+            fields.forEach(id => {
+                if (!validateField(document.getElementById(id))) {
+                    errors.push(id);
                 }
-                if (document.getElementById("paid-by").value === "שולם על ידי מישהו אחר") {
-                    fields.push("paybox-name");
+            });
+            if (errors.length > 0) {
+                var errorMessages = [];
+                if (errors.includes("price-confirmed")) {
+                    errorMessages.push("נא ללחוץ על כפתור 'אישור' כדי לאשר את התשלום בפייבוקס!");
                 }
-                fields.forEach(id => {
-                    if (!validateField(document.getElementById(id))) {
-                        errors.push(id);
-                    }
-                });
-                if (errors.length > 0) {
-                    var errorMessages = [];
-                    if (errors.includes("price-confirmed")) {
-                        errorMessages.push("נא ללחוץ על כפתור 'אישור' כדי לאשר את התשלום בפייבוקס!");
-                    }
-                    if (errors.some(id => ["city", "street", "apartment-number", "zip-code"].includes(id))) {
-                        errorMessages.push("נא למלא את כל שדות הכתובת עבור משלוח!");
-                    }
-                    if (errors.includes("full-name")) {
-                        errorMessages.push("נא למלא את שדה 'שם מלא'!");
-                    }
-                    if (errors.includes("quantity")) {
-                        errorMessages.push("נא לבחור כמות מדבקות!");
-                    }
-                    if (errors.includes("shipping-pickup")) {
-                        errorMessages.push("נא לבחור אפשרות משלוח/איסוף!");
-                    }
-                    if (errors.includes("paid-by")) {
-                        errorMessages.push("נא לבחור מי שילם!");
-                    }
-                    if (errors.includes("paybox-name")) {
-                        errorMessages.push("נא למלא את שדה 'שם פייבוקס'!");
-                    }
-                    if (errors.includes("phone")) {
-                        errorMessages.push("נא למלא את שדה 'טלפון'!");
-                    }
-                    if (errorMessages.length > 0) {
-                        alert(errorMessages.join("\n"));
-                    }
-                    return false;
+                if (errors.some(id => ["city", "street", "apartment-number", "zip-code"].includes(id))) {
+                    errorMessages.push("נא למלא את כל שדות הכתובת עבור משלוח!");
                 }
-                alert("⚠️ שימו לב! ⚠️\n\n" +
-                      "• נא וודאו שביצעתם תשלום בפייבוקס לפני שליחת טופס זה\n" +
-                      "• לא ניתן לבצע שינויים לאחר שליחת הטופס\n" +
-                      "• איסוף יתבצע במשחקי הקבוצה, יש לעקוב אחר הפרסומים בדף האינסטגרם\n" +
-                      "• המשלוחים מבוצעים על ידי דואר ישראל - הארגון לא אחראי למוצרים אחרי שליחתם\n" +
-                      "• מעקב משלוחים - בעת שליחת המוצרים תקבלו הודעה המכילה מספר מעקב על החבילה\n" +
-                      "• לחצו 'אישור' ולאחר מכן 'שלח הזמנה' - לקבלת אישור סופי");
-                confirmed = true;
+                if (errors.includes("full-name")) {
+                    errorMessages.push("נא למלא את שדה 'שם מלא'!");
+                }
+                if (errors.includes("quantity")) {
+                    errorMessages.push("נא לבחור כמות מדבקות!");
+                }
+                if (errors.includes("shipping-pickup")) {
+                    errorMessages.push("נא לבחור אפשרות משלוח/איסוף!");
+                }
+                if (errors.includes("paid-by")) {
+                    errorMessages.push("נא לבחור מי שילם!");
+                }
+                if (errors.includes("paybox-name")) {
+                    errorMessages.push("נא למלא את שדה 'שם פייבוקס'!");
+                }
+                if (errors.includes("phone")) {
+                    errorMessages.push("נא למלא את שדה 'טלפון'!");
+                }
+                if (errorMessages.length > 0) {
+                    alert(errorMessages.join("\n"));
+                }
                 return false;
             }
+            alert("⚠️ שימו לב! ⚠️\n\n" +
+                  "• נא וודאו שביצעתם תשלום בפייבוקס לפני שליחת טופס זה\n" +
+                  "• לא ניתן לבצע שינויים לאחר שליחת הטופס\n" +
+                  "• איסוף יתבצע במשחקי הקבוצה, יש לעקוב אחר הפרסומים בדף האינסטגרם\n" +
+                  "• המשלוחים מבוצעים על ידי דואר ישראל - הארגון לא אחראי למוצרים אחרי שליחתם\n" +
+                  "• מעקב משלוחים - בעת שליחת המוצרים תקבלו הודעה המכילה מספר מעקב על החבילה\n" +
+                  "• לחצו 'אישור' ולאחר מכן 'שלח הזמנה' - לקבלת אישור סופי");
+            confirmed = true;
             return false;
         } else {
             submitStickers();
@@ -518,14 +541,14 @@
     function submitStickers() {
         var spinner = document.getElementById("loading-spinner");
         spinner.style.display = "block";
-        combineAddress(); // Ensure address is updated
+        combineAddress(); // Ensure address is updated before creating FormData
         var form = document.forms[0];
         var data = new FormData(form);
         var paidBy = document.getElementById("paid-by").value;
         var payboxName = document.getElementById("paybox-name").value || "";
         data.set("שולם על ידי", paidBy === "שולם על ידי מישהו אחר" ? payboxName : "אני שילמתי");
         data.set("כמה שולם בפייבוקס", document.getElementById("price-value").value);
-        console.log("Submitting data:", Object.fromEntries(data)); // Debug log
+
         fetch(CONFIG.SCRIPT_URL, {
             method: "POST",
             body: data
@@ -533,7 +556,7 @@
             if (!response.ok) throw new Error("שגיאה ברשת");
             return response.text();
         }).then(text => {
-            console.log("Response:", text);
+            console.log(text);
             spinner.style.display = "none";
             window.location.href = "https://lafamilia-jgb.github.io/Merch-JGB/confirmation.html";
         }).catch(error => {
