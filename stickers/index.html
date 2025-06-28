@@ -538,32 +538,33 @@
         }
     }
 
-        function submitStickers() {
-            var spinner = document.getElementById("loading-spinner");
-            spinner.style.display = "block";
-            var form = document.forms[0];
-            var data = new FormData(form);
-            var paidBy = document.getElementById("paid-by").value;
-            var payboxName = document.getElementById("paybox-name").value || "";
-            data.set("שולם על ידי", paidBy === "שולם על ידי מישהו אחר" ? payboxName : "אני שילמתי");
-            data.set("כמה שולם בפייבוקס", document.getElementById("price-value").value);
+    function submitStickers() {
+        var spinner = document.getElementById("loading-spinner");
+        spinner.style.display = "block";
+        combineAddress(); // Ensure address is updated before creating FormData
+        var form = document.forms[0];
+        var data = new FormData(form);
+        var paidBy = document.getElementById("paid-by").value;
+        var payboxName = document.getElementById("paybox-name").value || "";
+        data.set("שולם על ידי", paidBy === "שולם על ידי מישהו אחר" ? payboxName : "אני שילמתי");
+        data.set("כמה שולם בפייבוקס", document.getElementById("price-value").value);
 
-            fetch(CONFIG.SCRIPT_URL, {
-                method: "POST",
-                body: data
-            }).then(response => {
-                if (!response.ok) throw new Error("שגיאה ברשת");
-                return response.text();
-            }).then(text => {
-                console.log(text);
-                spinner.style.display = "none";
-                window.location.href = "https://lafamilia-jgb.github.io/Merch-JGB/confirmation.html";
-            }).catch(error => {
-                console.error("Error:", error);
-                spinner.style.display = "none";
-                alert("שגיאה בשליחת ההזמנה: " + error.message);
-            });
-        }
+        fetch(CONFIG.SCRIPT_URL, {
+            method: "POST",
+            body: data
+        }).then(response => {
+            if (!response.ok) throw new Error("שגיאה ברשת");
+            return response.text();
+        }).then(text => {
+            console.log(text);
+            spinner.style.display = "none";
+            window.location.href = "https://lafamilia-jgb.github.io/Merch-JGB/confirmation.html";
+        }).catch(error => {
+            console.error("Error:", error);
+            spinner.style.display = "none";
+            alert("שגיאה בשליחת ההזמנה: " + error.message);
+        });
+    }
     </script>
 </body>
 </html>
