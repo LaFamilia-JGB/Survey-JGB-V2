@@ -187,9 +187,21 @@
         .price-confirm button:hover:not(.active) {
             background: #555;
         }
+        .price-confirm button.invalid {
+            border-color: #ff5555;
+            box-shadow: 0 0 5px #ff5555;
+        }
+        .shake {
+            animation: shake 0.5s;
+        }
         @keyframes spin {
             0% { transform: translate(-50%, -50%) rotate(0deg); }
             100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
         }
         @media (max-width: 600px) {
             form {
@@ -222,7 +234,7 @@
 <body>
     <header>
         <img src="https://lafamilia-jgb.github.io/Merch-JGB/images/logo.png" alt="Beitar Jerusalem Logo" class="logo">
-        <h1>La Familia - JGB - הזמנת מדבקות</h1>
+        <h1>הזמנת מדבקות - לה פמיליה - צובעים את ירושלים!</h1>
     </header>
 
     <div class="payment-options" id="payment-options"></div>
@@ -320,7 +332,7 @@
     <script>
         // Configurable Parameters
         const CONFIG = {
-            STICKER_PRICES: { "500": 350, "1000": 700, },
+            STICKER_PRICES: { "500": 50, "1000": 100 },
             SHIPPING_COST: 28,
             PAYBOX_LINKS: [
                 { label: "אפשרות 1", url: "[PAYBOX_LINK_1]" },
@@ -388,6 +400,7 @@
             var priceConfirmBtn = document.getElementById("price-confirm-btn");
             var priceConfirmed = document.getElementById("price-confirmed");
             priceConfirmBtn.classList.toggle("active");
+            priceConfirmBtn.classList.remove("invalid", "shake");
             priceConfirmed.value = priceConfirmBtn.classList.contains("active") ? "true" : "false";
             validateField({ id: "price-confirmed", required: true, value: priceConfirmed.value });
         }
@@ -453,22 +466,30 @@
                 fields.push("paybox-name");
             }
             var isValid = fields.every(id => validateField(document.getElementById(id)));
+            if (!isValid && document.getElementById("price-confirmed").value === "false") {
+                document.getElementById("price-confirm-btn").classList.add("invalid", "shake");
+                setTimeout(() => document.getElementById("price-confirm-btn").classList.remove("shake"), 500);
+            }
             combineAddress();
             return isValid;
         }
 
         function validateAndConfirm() {
             if (!confirmed) {
-                if (validateForm()) {
-                    alert("⚠️ שימו לב! ⚠️\n\n" +
-                          "• נא וודאו שביצעתם תשלום בפייבוקס לפני שליחת טופס זה\n" +
-                          "• לא ניתן לבצע שינויים לאחר שליחת הטופס\n" +
-                          "• איסוף יתבצע במשחקי הקבוצה, יש לעקוב אחר הפרסומים בדף האינסטגרם\n" +
-                          "• המשלוחים מבוצעים על ידי דואר ישראל - הארגון לא אחראי למוצרים אחרי שליחתם\n" +
-                          "• מעקב משלוחים - בעת שליחת המוצרים תקבלו הודעה המכילה מספר מעקב על החבילה\n" +
-                          "• לחצו 'אישור' ולאחר מכן 'שלח הזמנה' - לקבלת אישור סופי");
-                    confirmed = true;
+                if (!validateForm()) {
+                    if (document.getElementById("price-confirmed").value === "false") {
+                        alert("נא ללחוץ על כפתור 'אישור' כדי לאשר את התשלום בפייבוקס!");
+                    }
+                    return false;
                 }
+                alert("⚠️ שימו לב! ⚠️\n\n" +
+                      "• נא וודאו שביצעתם תשלום בפייבוקס לפני שליחת טופס זה\n" +
+                      "• לא ניתן לבצע שינויים לאחר שליחת הטופס\n" +
+                      "• איסוף יתבצע במשחקי הקבוצה, יש לעקוב אחר הפרסומים בדף האינסטגרם\n" +
+                      "• המשלוחים מבוצעים על ידי דואר ישראל - הארגון לא אחראי למוצרים אחרי שליחתם\n" +
+                      "• מעקב משלוחים - בעת שליחת המוצרים תקבלו הודעה המכילה מספר מעקב על החבילה\n" +
+                      "• לחצו 'אישור' ולאחר מכן 'שלח הזמנה' - לקבלת אישור סופי");
+                confirmed = true;
                 return false;
             } else {
                 submitStickers();
