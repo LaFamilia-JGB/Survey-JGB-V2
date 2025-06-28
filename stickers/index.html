@@ -13,6 +13,7 @@
             margin: 0;
             padding: 20px;
             direction: rtl;
+            background-image: url('https://lafamilia-jgb.github.io/Merch-JGB/images/background.png');
             background-size: cover;
             background-position: center;
         }
@@ -339,8 +340,9 @@
                 { label: "קישור לקבוצת פייבוקס 3", url: "[PAYBOX_LINK_3]" }
             ],
             LOGO_URL: "https://lafamilia-jgb.github.io/Merch-JGB/images/NewStickers.png",
+            BACKGROUND_URL: "https://lafamilia-jgb.github.io/Merch-JGB/images/background.png",
             STICKER_QUANTITIES: ["500", "1000"],
-            SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxvL0R0UFs3vO_-SclKs9JoUA09Zg7EBT8S9NRQoLAMIWciE6Wb49epFyQ4BU5VzR223A/exec"
+            SCRIPT_URL: "https://script.google.com/macros/s/AKfycby3LeEQGjzKUjehE_xKsOD_qbZqvMe4Bwh5zbhqsOGUUoqJTiTYkZl9RYd_k_ImipExhg/exec"
         };
 
         let confirmed = false;
@@ -477,6 +479,7 @@
         }
 
         function validateAndConfirm() {
+            console.log("validateAndConfirm called"); // Debug start
             if (!confirmed) {
                 if (!validateForm()) {
                     var errors = [];
@@ -521,6 +524,7 @@
                         if (errorMessages.length > 0) {
                             alert(errorMessages.join("\n"));
                         }
+                        console.log("Validation failed with errors:", errors); // Debug errors
                         return false;
                     }
                     alert("⚠️ שימו לב! ⚠️\n\n" +
@@ -551,7 +555,7 @@
             var payboxName = document.getElementById("paybox-name").value || "";
             data.set("שולם על ידי", paidBy === "שולם על ידי מישהו אחר" ? payboxName : "אני שילמתי");
             data.set("כמה שולם בפייבוקס", document.getElementById("price-value").value);
-
+            console.log("Submitting to:", CONFIG.SCRIPT_URL); // Debug URL
             fetch(CONFIG.SCRIPT_URL, {
                 method: "POST",
                 body: data
@@ -559,6 +563,7 @@
                 if (!response.ok) throw new Error("שגיאה ברשת: " + response.statusText);
                 return response.text();
             }).then(text => {
+                console.log("Server response:", text); // Debug response
                 spinner.style.display = "none";
                 window.location.href = "https://lafamilia-jgb.github.io/Merch-JGB/confirmation.html";
             }).catch(error => {
