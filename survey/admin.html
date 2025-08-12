@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>סיכום הגעות - אדמין</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <main class="container">
+    <header class="topbar">
+      <h1>סיכום הגעות</h1>
+      <p class="muted">בחר משימה להצגה</p>
+    </header>
+
+    <section class="card">
+      <label class="field-label">בחר משימה:</label>
+      <select id="taskSelect"></select>
+    </section>
+
+    <section id="summary" class="card-list">
+      <!-- קטגוריות ונתונים ימולאו כאן -->
+    </section>
+
+    <div class="actions">
+      <button id="copyWhatsapp" class="btn btn-primary">העתק לווטסאפ</button>
+      <button id="updateSheets" class="btn btn-secondary">עדכן ב-Google Sheets</button>
+    </div>
+  </main>
+
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script>
+    APPS.initAdminPage();
+    document.getElementById('copyWhatsapp').addEventListener('click', APPS.copyWhatsappText);
+    document.getElementById('updateSheets').addEventListener('click', APPS.syncToSheets);
+  </script>
+</body>
+</html>

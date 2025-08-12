@@ -1,0 +1,42 @@
+:root{
+  --bg:#f7f7f8;
+  --card:#fff;
+  --green:#1aa44b;
+  --red:#d64545;
+  --yellow:#e0ad11;
+  --gray:#8a8f99;
+  --text:#111;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; background:var(--bg); color:var(--text);}
+.container{max-width:640px;margin:0 auto;padding:12px;}
+.topbar{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.topbar h1{margin:0;font-size:1.4rem}
+.muted{color:var(--gray);font-size:0.9rem}
+.card{background:var(--card);padding:12px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,0.06);margin-bottom:10px}
+.card-list{display:flex;flex-direction:column;gap:8px}
+.task-item{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfbfb);border:1px solid #eee}
+.task-meta{font-size:0.9rem;color:var(--gray)}
+.btn{padding:10px 12px;border-radius:10px;border:none;font-weight:600}
+.btn-primary{background:var(--green);color:#fff}
+.btn-secondary{background:#ededf2;color:#222}
+.status-icon{font-size:1.1rem;margin-left:8px}
+.radio-group{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.radio{display:flex;align-items:center;gap:8px}
+.field-label{font-size:0.9rem;margin-top:6px;margin-bottom:6px}
+input[type="text"], input[type="tel"], textarea, select{width:100%;padding:10px;border-radius:8px;border:1px solid #ddd}
+.required{color:var(--red)}
+.footer-note{text-align:center;margin-top:12px;font-size:0.9rem}
+.actions{display:flex;gap:8px;justify-content:space-between;margin-top:10px}
+.category{padding:8px;border-radius:8px;background:#fff;margin-bottom:8px}
+.category h3{margin:0 0 6px 0}
+.name-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #eee}
+.name-row:last-child{border-bottom:none}
+.status-badge{padding:4px 8px;border-radius:8px;color:#fff;font-weight:700}
+.ok{background:var(--green);}
+.no{background:var(--red);}
+.partial{background:var(--yellow);color:#111}
+.unknown{background:var(--gray)}
+@media (min-width:640px){
+  .container{padding:20px}
+}

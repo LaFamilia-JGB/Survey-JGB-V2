@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>מענה למשימה</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <main class="container">
+    <header class="topbar">
+      <button class="back" onclick="history.back()">← חזור</button>
+      <h1 id="taskTitle">משימה</h1>
+      <p id="taskMeta" class="muted"></p>
+    </header>
+
+    <form id="responseForm" class="card">
+      <div class="radio-group">
+        <label class="radio">
+          <input type="radio" name="status" value="מגיע" /> <span class="status-icon ok">✅</span> מגיע
+        </label>
+        <label class="radio">
+          <input type="radio" name="status" value="לא מגיע" /> <span class="status-icon no">❌</span> לא מגיע (חובה סיבה)
+        </label>
+        <label class="radio">
+          <input type="radio" name="status" value="מגיע רק למשחק" /> <span class="status-icon partial">🟨</span> מגיע רק למשחק
+        </label>
+      </div>
+
+      <label class="field-label">סיבה (אם לא מגיע): <span class="required" id="reasonReq" style="display:none">*</span></label>
+      <input id="reason" name="reason" type="text" placeholder="למה לא מגיע/ת?" />
+
+      <label class="field-label">הערות (אופציונלי)</label>
+      <textarea id="note" name="note" rows="3" placeholder="הערות"></textarea>
+
+      <input type="hidden" id="taskId" name="taskId" />
+      <input type="hidden" id="name" name="name" placeholder="הכנס שם" />
+
+      <label class="field-label">שם (כדי לזיהוי)</label>
+      <input id="inputName" type="text" placeholder="שם מלא" required />
+
+      <button id="saveBtn" class="btn btn-primary" type="submit">שמור</button>
+    </form>
+  </main>
+
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script>
+    APPS.initRespondPage();
+    // לוגיקה טופס
+    document.getElementById('responseForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      await APPS.submitResponse();
+    });
+  </script>
+</body>
+</html>
