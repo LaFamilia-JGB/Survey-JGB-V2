@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Familia - JGB - הזמנת חולצות</title>
+    <link rel="icon" href="https://lafamilia-jgb.github.io/Merch-JGB/images/logo.png" type="image/png">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            direction: rtl;
+            background-image: url('https://lafamilia-jgb.github.io/Merch-JGB/images/background.png');
+            background-size: cover;
+            background-position: center;
+        }
+        header {
+            position: sticky;
+            top: 0;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 10px 0;
+            z-index: 10;
+            text-align: center;
+        }
+        h1 {
+            color: #ffeb3b;
+            font-size: 2em;
+            margin: 10px 0;
+        }
+        p {
+            text-align: center;
+            font-size: 1.2em;
+        }
+        form {
+            max-width: 500px;
+            margin: 20px auto;
+            background: rgba(26, 26, 26, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(255, 235, 59, 0.3);
+            position: relative;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ffeb3b;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 1em;
+            transition: box-shadow 0.3s;
+        }
+        input:hover, select:hover, textarea:hover {
+            box-shadow: 0 0 5px #ffeb3b;
+        }
+        input.invalid, select.invalid, textarea.invalid {
+            border-color: #ff5555;
+            box-shadow: 0 0 5px #ff5555;
+        }
+        .error-message {
+            color: #ff5555;
+            font-size: 0.9em;
+            margin: -8px 0 10px;
+            display: none;
+        }
+        input[type="submit"] {
+            background-color: #ffeb3b;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 15px 25px;
+            transition: background-color 0.3s;
+        }
+        input[type="submit"]:hover {
+            background-color: #ffd700;
+        }
+        #address-fields, #paybox-name-field {
+            display: none;
+        }
+        .payment-options {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .payment-options a {
+            background-color: #ffeb3b;
+            color: #000;
+            padding: 10px 15px;
+            text-align: center;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            flex: 1 1 100px;
+            max-width: 100px;
+            box-sizing: border-box;
+        }
+        .payment-options a:hover {
+            background-color: #ffd700;
+        }
+        .shirt-sizes {
+            margin-bottom: 15px;
+        }
+        .shirt-entry {
+            display: flex;
+            align-items: center;
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .shirt-entry label {
+            margin: 0 10px 0 0;
+            flex: 0 0 60px;
+        }
+        .shirt-entry select {
+            flex: 1;
+            min-width: 100px;
+        }
+        .icon-btn {
+            background: none;
+            border: 1px solid #ffeb3b;
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #ffeb3b;
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .icon-btn:hover {
+            background-color: #ffeb3b;
+            color: #000;
+        }
+        .address-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .address-row input {
+            flex: 1;
+        }
+        .street-container {
+            display: flex;
+            gap: 5px;
+            flex: 2 1 200px;
+        }
+        .street-container input[type="text"]#street {
+            flex: 3;
+        }
+        .street-container input[type="number"]#house-number {
+            flex: 0 0 80px;
+            width: 80px;
+        }
+        #city {
+            flex: 1 1 200px;
+        }
+        #apartment-number, #zip-code {
+            flex: 0 0 80px;
+            width: 80px;
+        }
+        #address-preview {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px dashed #ffeb3b;
+            background: #222;
+            color: #fff;
+            font-size: 1em;
+            text-align: center;
+        }
+        .logo {
+            max-width: 80px;
+            display: block;
+            margin: 0 auto;
+        }
+        .spinner {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 4px solid #ffeb3b;
+            border-top: 4px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .price-confirm {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .price-confirm button {
+            background: #333;
+            border: 2px solid #ffeb3b;
+            color: #ffeb3b;
+            padding: 8px 15px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .price-confirm button.active {
+            background: #ffeb3b;
+            color: #000;
+            box-shadow: 0 0 10px rgba(255, 235, 59, 0.5);
+        }
+        .price-confirm button:hover:not(.active) {
+            background: #555;
+        }
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        @media (max-width: 600px) {
+            form {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 1.5em;
+            }
+            p {
+                font-size: 1em;
+            }
+            .payment-options {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .payment-options a {
+                max-width: 100%;
+                flex: 1 1 auto;
+            }
+            .shirt-entry {
+                flex-direction: row;
+                align-items: center;
+                padding: 5px;
+            }
+            .shirt-entry label {
+                margin: 0 5px 0 0;
+                flex: 0 0 50px;
+            }
+            .shirt-entry select {
+                flex: 1;
+                margin: 5px 0;
+            }
+            .icon-btn {
+                width: 25px;
+                height: 25px;
+            }
+            .address-row {
+                flex-direction: column;
+            }
+            .street-container {
+                flex-direction: row;
+                flex: 1 1 auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="https://lafamilia-jgb.github.io/Merch-JGB/images/logo.png" alt="Beitar Jerusalem Logo" class="logo">
+        <h1>La Familia - JGB - הזמנת חולצות</h1>
+    </header>
+
+    <div class="payment-options" id="payment-options"></div>
+
+    <p>מלאו את הטופס אחרי שביצעתם תשלום בפייבוקס</p>
+
+    <form onsubmit="return validateAndConfirm()">
+        <div class="spinner" id="loading-spinner"></div>
+        <label>שם מלא:</label>
+        <input type="text" name="שם מלא" id="full-name" required onblur="validateField(this)">
+        <div class="error-message" id="full-name-error">שדה חובה</div>
+
+        <div class="shirt-sizes" id="shirt-sizes">
+            <div class="shirt-entry">
+                <label>מידה:</label>
+                <select name="מידה" required onchange="validateField(this); updatePrice()">
+                    <option value="" selected>בחר</option>
+                    <option value="XS">XS</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
+                    <option value="XXL">XXL</option>
+                    <option value="XXXL">XXXL</option>
+                </select>
+                <div class="error-message" id="size-error">שדה חובה</div>
+                <button type="button" class="icon-btn" onclick="addShirt(this)">+</button>
+                <button type="button" class="icon-btn" onclick="removeShirt(this)">-</button>
+            </div>
+        </div>
+
+        <label>משלוח/איסוף:</label>
+        <select name="משלוח/איסוף" id="shipping-pickup" onchange="toggleAddressFields(); updatePrice(); validateField(this)" required>
+            <option value="" selected>בחר</option>
+            <option value="איסוף">איסוף</option>
+            <option value="משלוח">משלוח</option>
+        </select>
+        <div class="error-message" id="shipping-pickup-error">שדה חובה</div>
+
+        <div class="price-confirm">
+            <label id="price-label">אנא אשר תשלום בפייבוקס על סך 0</label>
+            <button type="button" id="price-confirm-btn" onclick="togglePriceConfirm()">אישור</button>
+            <input type="hidden" name="כמה שולם בפייבוקס" id="price-value">
+            <input type="hidden" id="price-confirmed" value="false">
+        </div>
+        <div class="error-message" id="price-confirm-error">יש לאשר את התשלום</div>
+
+        <div id="address-fields">
+            <div class="address-row">
+                <div>
+                    <label>עיר:</label>
+                    <input type="text" id="city" oninput="updateAddressPreview()" onblur="validateField(this)">
+                    <div class="error-message" id="city-error">שדה חובה למשלוח</div>
+                </div>
+                <div class="street-container">
+                    <div>
+                        <label>רחוב:</label>
+                        <input type="text" id="street" oninput="updateAddressPreview()" onblur="validateField(this)">
+                        <div class="error-message" id="street-error">שדה חובה למשלוח</div>
+                    </div>
+                    <div>
+                        <label>מספר בית:</label>
+                        <input type="number" id="house-number" maxlength="3" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3); updateAddressPreview()">
+                    </div>
+                </div>
+            </div>
+            <div class="address-row">
+                <div>
+                    <label>מספר דירה:</label>
+                    <input type="number" id="apartment-number" oninput="updateAddressPreview()" onblur="validateField(this)">
+                    <div class="error-message" id="apartment-number-error">שדה חובה למשלוח</div>
+                </div>
+                <div>
+                    <label>מיקוד:</label>
+                    <input type="text" id="zip-code" oninput="updateAddressPreview()" onblur="validateField(this)">
+                    <div class="error-message" id="zip-code-error">שדה חובה למשלוח</div>
+                </div>
+            </div>
+            <input type="text" id="address-preview" readonly placeholder="תצוגה מקדימה של הכתובת תופיע כאן">
+        </div>
+
+        <input type="hidden" name="כתובת למשלוח" id="shipping-address">
+
+        <label>שולם על ידי:</label>
+        <select name="שולם על ידי" id="paid-by" onchange="togglePayboxName(); validateField(this)" required>
+            <option value="" selected>בחר</option>
+            <option value="אני שילמתי">אני שילמתי</option>
+            <option value="שולם על ידי מישהו אחר">שולם על ידי מישהו אחר</option>
+        </select>
+        <div class="error-message" id="paid-by-error">שדה חובה</div>
+
+        <div id="paybox-name-field">
+            <label>השם פייבוקס שביצע תשלום:</label>
+            <input type="text" name="שם פייבוקס" id="paybox-name" onblur="validateField(this)">
+            <div class="error-message" id="paybox-name-error">שדה חובה אם שולם על ידי מישהו אחר</div>
+        </div>
+
+        <label>טלפון:</label>
+        <input type="tel" name="טלפון" id="phone" required onblur="validateField(this)">
+        <div class="error-message" id="phone-error">שדה חובה</div>
+
+        <label>הערות:</label>
+        <textarea name="הערות"></textarea>
+
+        <input type="submit" value="שלח הזמנה">
+    </form>
+
+    <script>
+        // Configurable Parameters
+        const CONFIG = {
+            SHIRT_PRICE: 50,
+            SHIPPING_COST: 28,
+            PAYBOX_LINKS: [
+                { label: "אפשרות 1", url: "[PAYBOX_LINK_1]" },
+                { label: "אפשרות 2", url: "[PAYBOX_LINK_2]" },
+                { label: "אפשרות 3", url: "[PAYBOX_LINK_3]" }
+            ],
+            LOGO_URL: "https://lafamilia-jgb.github.io/Merch-JGB/images/logo.png",
+            BACKGROUND_URL: "https://lafamilia-jgb.github.io/Merch-JGB/images/background.png",
+            SHIRT_SIZES: ["XS", "S", "M", "L", "XL", "XXL", "XXXL"],
+            SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyhQZFUPTJJiZAW05n1Qfp1rSBOzJWm1SJ-BNj4NqruD3hLNjB-m5-o7zoNgyDsIQil/exec"
+        };
+
+        let confirmed = false;
+
+        // Initialize Payment Options
+        document.addEventListener("DOMContentLoaded", () => {
+            const paymentDiv = document.getElementById("payment-options");
+            paymentDiv.innerHTML = CONFIG.PAYBOX_LINKS.map(link => 
+                `<a href="${link.url}" target="_blank">${link.label}</a>`
+            ).join("");
+            document.querySelector(".logo").src = CONFIG.LOGO_URL;
+            document.body.style.backgroundImage = `url(${CONFIG.BACKGROUND_URL})`;
+        });
+
+        function toggleAddressFields() {
+            var select = document.getElementById("shipping-pickup");
+            var addressFields = document.getElementById("address-fields");
+            addressFields.style.display = select.value === "משלוח" ? "block" : "none";
+            updateAddressPreview();
+        }
+
+        function togglePayboxName() {
+            var select = document.getElementById("paid-by");
+            var payboxNameField = document.getElementById("paybox-name-field");
+            payboxNameField.style.display = select.value === "שולם על ידי מישהו אחר" ? "block" : "none";
+            validateField(document.getElementById("paybox-name"));
+        }
+
+        function addShirt(button) {
+            var container = document.getElementById("shirt-sizes");
+            var newEntry = document.createElement("div");
+            newEntry.className = "shirt-entry";
+            newEntry.innerHTML = `
+                <label>מידה:</label>
+                <select name="מידה" required onchange="validateField(this); updatePrice()">
+                    <option value="" selected>בחר</option>
+                    ${CONFIG.SHIRT_SIZES.map(size => `<option value="${size}">${size}</option>`).join("")}
+                </select>
+                <div class="error-message" id="size-error">שדה חובה</div>
+                <button type="button" class="icon-btn" onclick="addShirt(this)">+</button>
+                <button type="button" class="icon-btn" onclick="removeShirt(this)">-</button>
+            `;
+            container.appendChild(newEntry);
+            updatePrice();
+        }
+
+        function removeShirt(button) {
+            var entries = document.getElementsByClassName("shirt-entry");
+            if (entries.length > 1) {
+                button.parentElement.remove();
+                updatePrice();
+            }
+        }
+
+        function updatePrice() {
+            var shipping = document.getElementById("shipping-pickup").value;
+            var priceLabel = document.getElementById("price-label");
+            var priceValue = document.getElementById("price-value");
+            var priceConfirmBtn = document.getElementById("price-confirm-btn");
+            var priceConfirmed = document.getElementById("price-confirmed");
+            var shirtCount = document.getElementsByName("מידה").length;
+            var basePrice = CONFIG.SHIRT_PRICE * shirtCount;
+            var totalPrice = shipping === "משלוח" ? basePrice + CONFIG.SHIPPING_COST : basePrice;
+            priceLabel.textContent = `אנא אשר תשלום בפייבוקס על סך ${totalPrice}`;
+            priceValue.value = totalPrice;
+            priceConfirmBtn.classList.remove("active");
+            priceConfirmed.value = "false";
+        }
+
+        function togglePriceConfirm() {
+            var priceConfirmBtn = document.getElementById("price-confirm-btn");
+            var priceConfirmed = document.getElementById("price-confirmed");
+            priceConfirmBtn.classList.toggle("active");
+            priceConfirmed.value = priceConfirmBtn.classList.contains("active") ? "true" : "false";
+            validateField({ id: "price-confirmed", required: true, value: priceConfirmed.value });
+        }
+
+        function combineAddress() {
+            var select = document.getElementById("shipping-pickup");
+            var hiddenAddress = document.getElementById("shipping-address");
+            if (select.value === "משלוח") {
+                var city = document.getElementById("city").value || "";
+                var street = document.getElementById("street").value || "";
+                var houseNumber = document.getElementById("house-number").value || "";
+                var apartment = document.getElementById("apartment-number").value || "";
+                var zip = document.getElementById("zip-code").value || "";
+                hiddenAddress.value = `${city}, ${street} ${houseNumber}, דירה ${apartment}, מיקוד ${zip}`.replace(/, ,/g, ",").trim();
+            } else {
+                hiddenAddress.value = "";
+            }
+        }
+
+        function updateAddressPreview() {
+            var select = document.getElementById("shipping-pickup");
+            var preview = document.getElementById("address-preview");
+            if (select.value === "משלוח") {
+                var city = document.getElementById("city").value || "";
+                var street = document.getElementById("street").value || "";
+                var houseNumber = document.getElementById("house-number").value || "";
+                var apartment = document.getElementById("apartment-number").value || "";
+                var zip = document.getElementById("zip-code").value || "";
+                preview.value = `${city}, ${street} ${houseNumber}, דירה ${apartment}, מיקוד ${zip}`.replace(/, ,/g, ",").trim();
+            } else {
+                preview.value = "אין כתובת - איסוף עצמי";
+            }
+        }
+
+        function validateField(field) {
+            var value = field.value ? field.value.trim() : field.value;
+            var error = document.getElementById(field.id + "-error");
+            var isValid = true;
+
+            if (field.required && (!value || value === "false")) {
+                isValid = false;
+            } else if (field.id === "paybox-name" && document.getElementById("paid-by").value === "שולם על ידי מישהו אחר" && !value) {
+                isValid = false;
+            } else if (document.getElementById("shipping-pickup").value === "משלוח" && ["city", "street", "apartment-number", "zip-code"].includes(field.id) && !value) {
+                isValid = false;
+            }
+
+            if (field.id === "price-confirmed") {
+                document.getElementById("price-confirm-btn").classList.toggle("invalid", !isValid);
+            } else {
+                field.classList.toggle("invalid", !isValid);
+            }
+            if (error) error.style.display = isValid ? "none" : "block";
+            return isValid;
+        }
+
+        function validateForm() {
+            var fields = ["full-name", "shipping-pickup", "price-confirmed", "paid-by", "phone"];
+            var sizes = Array.from(document.getElementsByName("מידה"));
+            var allSizesValid = sizes.every(select => validateField(select));
+            if (document.getElementById("shipping-pickup").value === "משלוח") {
+                fields.push("city", "street", "apartment-number", "zip-code");
+            }
+            if (document.getElementById("paid-by").value === "שולם על ידי מישהו אחר") {
+                fields.push("paybox-name");
+            }
+            var isValid = fields.every(id => validateField(document.getElementById(id))) && allSizesValid;
+            combineAddress();
+            return isValid;
+        }
+
+        function validateAndConfirm() {
+            if (!confirmed) {
+                if (validateForm()) {
+                    alert("⚠️ שימו לב! ⚠️\n\n" +
+                          "• נא וודאו שביצעתם תשלום בפייבוקס לפני שליחת טופס זה\n" +
+                          "• לא ניתן לבצע שינויים לאחר שליחת הטופס\n" +
+                          "• איסוף יתבצע במשחקי הקבוצה, יש לעקוב אחר הפרסומים בדף האינסטגרם\n" +
+                          "• המשלוחים מבוצעים על ידי דואר ישראל - הארגון לא אחראי למוצרים אחרי שליחתם\n" +
+                          "• מעקב משלוחים - בעת שליחת המוצרים תקבלו הודעה המכילה מספר מעקב על החבילה\n" +
+                          "• לחצו 'אישור' ולאחר מכן 'שלח הזמנה' - לקבלת אישור סופי");
+                    confirmed = true;
+                }
+                return false;
+            } else {
+                submitMultipleShirts();
+                confirmed = false;
+                return false;
+            }
+        }
+
+        function submitMultipleShirts() {
+            var spinner = document.getElementById("loading-spinner");
+            spinner.style.display = "block";
+            var form = document.forms[0];
+            var sizes = Array.from(document.getElementsByName("מידה")).map(s => s.value);
+            var totalPrice = parseInt(document.getElementById("price-value").value) || 0;
+            var shirtCount = sizes.length;
+            var pricePerShirt = shirtCount > 0 ? Math.round(totalPrice / shirtCount) : 0;
+            var data = new FormData(form);
+            var paidBy = document.getElementById("paid-by").value;
+            var payboxName = document.getElementById("paybox-name").value || "";
+            data.set("שולם על ידי", paidBy === "שולם על ידי מישהו אחר" ? payboxName : "אני שילמתי");
+
+            Promise.all(sizes.map(size => {
+                data.set("מידה", size);
+                data.set("כמה שולם בפייבוקס", pricePerShirt);
+                return fetch(CONFIG.SCRIPT_URL, {
+                    method: "POST",
+                    body: data
+                }).then(response => {
+                    if (!response.ok) throw new Error("שגיאה ברשת");
+                    return response.text();
+                });
+            })).then(results => {
+                console.log(results);
+                spinner.style.display = "none";
+                window.location.href = "https://lafamilia-jgb.github.io/Merch-JGB/confirmation.html";
+            }).catch(error => {
+                console.error("Error:", error);
+                spinner.style.display = "none";
+                alert("שגיאה בשליחת ההזמנה: " + error.message);
+            });
+        }
+    </script>
+</body>
+</html>
