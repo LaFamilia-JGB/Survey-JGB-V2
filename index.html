@@ -81,7 +81,7 @@
                 try {
                     const me = await API.me();
                     if (me?.success) {
-                        location.href = (me.role === 'admin') ? 'admin.html' : 'home.html';
+                        location.href = (me.role === 'admin') ? 'home.html' : 'home.html';
                         return;
                     }
                 } catch { }
@@ -96,7 +96,7 @@
             const btn = loginForm.querySelector('button'); btn.disabled = true;
             try {
                 const r = await API.login(u.value.trim(), p.value);
-                location.href = (r.role === 'admin') ? 'admin.html' : 'home.html';
+                location.href = (r.role === 'admin') ? 'home.html' : 'home.html';
             } catch (err) {
                 msg.textContent = err?.message || 'שגיאה בהתחברות';
             } finally {
