@@ -1,0 +1,181 @@
+/* =========================
+   Common UI (RTL + Calibri)
+   ========================= */
+
+/* טיפוגרפיה בסיסית לכל האלמנטים */
+html, body, button, input, select, textarea {
+  font-family: Calibri, "Segoe UI", Arial, sans-serif !important;
+  direction: rtl;
+  box-sizing: border-box;
+}
+*, *::before, *::after { box-sizing: inherit; }
+
+:root { --nav-h: 64px; }
+
+body {
+  background-color: #121212;
+  color: #ddd;
+  margin: 0;
+  padding: 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* מכולה מרכזית */
+.container {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 15px;
+  text-align: right;
+  /* לתת מקום לנווט התחתון; אפשר לעדכן ערך משתנה מ-JS */
+  padding-bottom: calc(var(--nav-h, 64px) + env(safe-area-inset-bottom, 0px));
+}
+
+/* כותרת עליונה */
+header.topbar {
+  background: #f1c40f;
+  color: #000;
+  padding: 15px;
+  text-align: center;
+  font-size: 1.6em;
+  font-weight: bold;
+  border-bottom: 2px solid #333;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+/* כרטיס משימה כללי */
+.task-card {
+  background: #1f1f1f;
+  border: 1px solid #2b2b2b;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
+  text-align: right;
+}
+.task-title {
+  font-size: 1.15em;
+  font-weight: 700;
+  color: #f1c40f;
+  margin-bottom: 6px;
+}
+.task-meta {
+  font-size: 1em;
+  color: #ddd;
+  margin-bottom: 8px;
+}
+.task-notes {
+  margin-top: 6px;
+  color: #f1c40f;
+  background: rgba(241,196,15,.08);
+  border: 1px dashed rgba(241,196,15,.35);
+  padding: 6px 8px;
+  border-radius: 6px;
+  white-space: pre-wrap;
+}
+
+/* כפתורים – שפה אחידה */
+.btn {
+  background: #f1c40f;
+  color: #000;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform .05s ease-in-out, opacity .2s;
+  font-size: 1.05em;
+}
+.btn:active    { transform: scale(0.98); }
+.btn[disabled]{ opacity: .6; cursor: default; }
+.btn-primary  { background: #f1c40f; color: #000; }   /* alias */
+.btn-secondary{ background: #2c2c2c; color: #eee; }
+.btn-icon {
+  padding: 6px 10px;
+  line-height: 1;
+  font-size: .95em;
+  border-radius: 8px;
+  background: #333;
+  color: #fff;
+  width: auto;
+  min-width: 0;
+}
+
+
+/* === Canonical Bottom Nav (global, enforced) === */
+:root { --nav-h: 64px; }
+
+#nav-spacer {
+  height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* השתמש תמיד ב-id #bottomNav כדי לעקוף סגנון מקומי */
+#bottomNav {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 1000 !important;
+
+  display: flex !important;
+  justify-content: space-around !important;
+  gap: 8px !important;
+
+  background: #1f1f1f !important;
+  border-top: 1px solid #222 !important;
+  box-shadow: 0 -2px 4px rgba(0,0,0,0.5) !important;
+
+  padding: 10px !important;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* כפתורי ניווט — אחידים */
+#bottomNav .nav-btn {
+  background: #333 !important;
+  color: #f1c40f !important;
+  border: none !important;
+  padding: 12px !important;
+  border-radius: 10px !important;
+  font-size: 1.3em !important;
+  flex: 1 1 0 !important;
+  margin: 0 5px !important;
+  cursor: pointer !important;
+  font-weight: bold !important;
+}
+#bottomNav .nav-btn:hover { background: #444 !important; }
+.nav-btn.is-disabled{ opacity:.45; pointer-events:none; filter:grayscale(.2); }
+
+
+
+/* טפסים כלליים */
+label { font-weight: 700; margin-top: 10px; display: block; }
+input, select, textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0 12px 0;
+  border-radius: 8px;
+  border: 1px solid #333;
+  background: #1f1f1f;
+  color: #ddd;
+  font-size: 1em;
+}
+textarea { min-height: 80px; resize: vertical; }
+
+/* אייקוני date/time בלבן (WebKit) */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+
+/* אזורי תגובות – מבנה כללי (אפשר להשלים בסגנון העמוד) */
+.resp-wrap  { margin-top: 10px; border-top: 1px solid #333; padding-top: 10px; }
+.resp-header{ display: grid; grid-template-columns: 1fr auto; column-gap: 8px; align-items: center; width: 100%; }
+.resp-body  { display: none; background: #151515; border: 1px solid #2a2a2a; border-radius: 10px; padding: 10px; margin-top: 8px; }
+.resp-open .resp-body { display: block; }
+.resp-title { color: #f1c40f; font-weight: 700; margin: 0 0 6px; }
+
+/* אנימציות כלליות */
+@keyframes fadeSlide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+

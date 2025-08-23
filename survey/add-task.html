@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>➕ הוספת משימה</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    :root {
+      --nav-h: 64px;
+    }
+
+    label.section {
+      display: block;
+      margin: 14px 0 6px;
+      color: #f1c40f;
+      font-size: 1.15em;
+      font-weight: 700;
+    }
+
+    .container {
+      max-width: 520px;
+      padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 16px);
+    }
+
+    .opt-row {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      background: #1b1b1b;
+      border: 1px solid #2b2b2b;
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 6px;
+    }
+
+    .opt-input {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .trash {
+      width: 34px;
+      height: 34px;
+      border-radius: 5px;
+      border: 1px solid #444;
+      background: #2b2b2b;
+      color: #eee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 19px;
+    }
+
+    .trash:hover {
+      background: #3a3a3a;
+    }
+
+    .requireBtn {
+      border: 1px solid #2f2f2f;
+      background: #242424;
+      color: #eee;
+      padding: 7px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .requireBtn.active {
+      background: #1e7f3f;
+      border-color: #1e7f3f;
+    }
+
+    .row-actions {
+      text-align: center;
+      margin-top: 14px;
+    }
+
+    .row-actions .btn {
+      display: inline-block;
+      width: 45%;
+      margin: 0 8px 4px;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">➕ הוספת משימה</header>
+
+  <main class="container">
+    <form id="addTaskForm">
+      <label class="section">שם המשימה:</label>
+      <input type="text" id="taskName" required>
+
+      <label class="section">תאריך:</label>
+      <input type="date" id="taskDate" required>
+
+      <label class="section">שעה:</label>
+      <input type="time" id="taskTime" required>
+
+      <label class="section">דגשים / פרטי אירוע:</label>
+      <textarea id="taskNotes" placeholder="קוד לבוש, עלות, ציוד להביא וכו'"></textarea>
+
+      <label class="section">אופציות תגובה:</label>
+      <div id="optionsContainer"></div>
+
+      <div class="row-actions">
+        <button type="button" class="btn btn-secondary" id="addOptionBtn">➕ הוסף אופציה</button>
+        <button type="button" class="btn btn-secondary" id="addGenericBtn">⚡ הוסף תשובות גנריות</button>
+      </div>
+
+      <div style="margin-top:12px; text-align:center;">
+        <button type="submit" class="btn" style="width:60%">שמור משימה</button>
+      </div>
+    </form>
+  </main>
+
+  <!-- Spacer -->
+  <div id="nav-spacer" aria-hidden="true"></div>
+
+  <!-- ניווט תחתון -->
+  <div class="bottom-nav" id="bottomNav">
+    <button class="nav-btn" onclick="location.href='index.html'">🏠 בית</button>
+    <button class="nav-btn" onclick="location.href='admin.html'">⚙️ ניהול</button>
+    <button class="nav-btn" data-logout title="יציאה">🚪 יציאה</button>
+  </div>
+
+  <script>
+    function setNavPadding() {
+      const nav = document.getElementById('bottomNav');
+      if (!nav) return;
+      const h = Math.ceil(nav.getBoundingClientRect().height);
+      document.documentElement.style.setProperty('--nav-h', h + 'px');
+      const spacer = document.getElementById('nav-spacer');
+      if (spacer) spacer.style.height = `calc(${h}px + env(safe-area-inset-bottom, 0px))`;
+    }
+    addEventListener('DOMContentLoaded', setNavPadding);
+    addEventListener('resize', setNavPadding);
+    addEventListener('orientationchange', setNavPadding);
+  </script>
+
+  <script src="assets/js/api.js"></script>
+  <script>
+    // 🔒 שומר־סף אדמין
+    (async function guardAdmin() {
+      try {
+        const hasToken = !!(API?.Auth?.token || localStorage.getItem('token'));
+        if (!hasToken) { location.href = 'login.html?force=1&next=add-task'; return; }
+        const me = await API.me();
+        if (!me?.success || me.role !== 'admin') { location.href = 'index.html?denied=1'; return; }
+      } catch {
+        location.href = 'index.html?err=auth';
+        return;
+      }
+
+      // חיבור כפתור יציאה
+      const logoutBtn = document.querySelector('.bottom-nav .nav-btn[data-logout]');
+      if (logoutBtn && !logoutBtn._wired) {
+        logoutBtn.addEventListener('click', async () => {
+          try { await API.logout(); } catch { }
+          location.href = 'login.html?force=1';
+        });
+        logoutBtn._wired = true;
+      }
+    })();
+
+    // ===== לוגיקת אופציות =====
+    const optContainer = document.getElementById('optionsContainer');
+    document.getElementById('addOptionBtn').addEventListener('click', () => addOptionRow(''));
+    document.getElementById('addGenericBtn').addEventListener('click', () => {
+      optContainer.innerHTML = '';
+      addOptionRow('✅ מגיע', false);
+      addOptionRow('🟨 מגיע רק למשחק', false);
+      addOptionRow('❌ לא מגיע', true);
+    });
+
+    function addOptionRow(text = '', requireNote = false) {
+      const esc = String(text ?? '').replace(/"/g, '&quot;');
+      const row = document.createElement('div'); row.className = 'opt-row';
+      row.innerHTML = `
+        <input type="text" class="optionText opt-input" placeholder="טקסט אופציה" value="${esc}" required>
+        <button type="button" class="trash" title="מחק">🗑️</button>
+        <button type="button" class="requireBtn ${requireNote ? 'active' : ''}" aria-pressed="${requireNote}">חובה הערה</button>`;
+      row.querySelector('.trash').addEventListener('click', () => row.remove());
+      const reqBtn = row.querySelector('.requireBtn');
+      reqBtn.addEventListener('click', () => {
+        reqBtn.classList.toggle('active');
+        reqBtn.setAttribute('aria-pressed', reqBtn.classList.contains('active'));
+      });
+      optContainer.appendChild(row);
+    }
+    addOptionRow();
+
+    // ===== שליחה =====
+    document.getElementById('addTaskForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('taskName').value.trim();
+      const date = document.getElementById('taskDate').value;
+      const time = document.getElementById('taskTime').value;
+      const notes = document.getElementById('taskNotes').value.trim();
+
+      const options = Array.from(document.querySelectorAll('.opt-row')).map(row => {
+        const text = row.querySelector('.optionText').value.trim();
+        const require = row.querySelector('.requireBtn').classList.contains('active');
+        return text ? { text, requireNote: require } : null;
+      }).filter(Boolean);
+
+      if (!options.length) { alert('יש להזין לפחות אופציה אחת'); return; }
+
+      try {
+        await API.addTask({ 'משימה': name, 'תאריך': date, 'שעה': time, 'אפשרויות': JSON.stringify(options), 'דגשים': notes });
+        alert('המשימה נוספה בהצלחה!');
+        location.href = 'admin.html';
+      } catch (err) {
+        console.error(err);
+        alert('הוספה נכשלה, בדוק את ה־API.');
+      }
+    });
+  </script>
+</body>
+
+</html>

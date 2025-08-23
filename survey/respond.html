@@ -1,57 +1,292 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
+
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>מענה למשימה</title>
-  <link rel="stylesheet" href="assets/css/styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>📝 מענה למשימה</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    :root {
+      --nav-h: 64px;
+    }
+
+    html,
+    body {
+      height: auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    body {
+      background: #121212;
+      color: #ccc;
+      margin: 0;
+      text-align: center;
+    }
+
+    header.topbar {
+      background: #f1c40f;
+      padding: 15px;
+      font-size: 1.6em;
+      font-weight: bold;
+      color: #000;
+      border-bottom: 2px solid #333;
+    }
+
+    .container {
+      padding: 15px;
+      max-width: 520px;
+      margin: auto;
+      padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 16px);
+      text-align: right;
+    }
+
+    #taskTitle {
+      background: #f1c40f;
+      color: #000;
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      font-size: 1.5em;
+      font-weight: bold;
+    }
+
+    .task-meta {
+      font-size: 1.2em;
+      color: #ddd;
+      margin-bottom: 12px;
+    }
+
+    .task-notes {
+      background: rgba(241, 196, 15, .10);
+      border: 1px solid #f1c40f;
+      color: #fff;
+      font-weight: bold;
+      font-size: 1.1em;
+      padding: 8px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+    }
+
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      background: #1f1f1f;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      font-size: 1.2em;
+      gap: 12px;
+    }
+
+    .radio-group input[type="radio"] {
+      margin: 0;
+      width: 1.2em;
+      height: 1.2em;
+      accent-color: #f1c40f;
+      flex-shrink: 0;
+    }
+
+    select,
+    textarea {
+      width: 95%;
+      padding: 8px;
+      border-radius: 8px;
+      margin: 8px auto 12px;
+      font-size: 1.1em;
+      background: #1f1f1f;
+      color: #ccc;
+      border: none;
+      text-align: right;
+    }
+
+    textarea {
+      background: rgba(241, 196, 15, .15);
+      color: #fff;
+      font-weight: bold;
+      font-size: 1.1em;
+      height: 60px;
+    }
+
+    .btn {
+      background: #f1c40f;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1.2em;
+      margin-top: 8px;
+      color: #000;
+      font-weight: bold;
+    }
+
+    .splash {
+      position: fixed;
+      inset: 0;
+      background: #121212;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .spinner {
+      width: 42px;
+      height: 42px;
+      border: 4px solid #333;
+      border-top-color: #f1c40f;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
+
 <body>
-  <main class="container">
-    <header class="topbar">
-      <button class="back" onclick="history.back()">← חזור</button>
-      <h1 id="taskTitle">משימה</h1>
-      <p id="taskMeta" class="muted"></p>
-    </header>
+  <div class="splash" id="splash">
+    <div class="spinner"></div>
+  </div>
 
-    <form id="responseForm" class="card">
-      <div class="radio-group">
-        <label class="radio">
-          <input type="radio" name="status" value="מגיע" /> <span class="status-icon ok">✅</span> מגיע
-        </label>
-        <label class="radio">
-          <input type="radio" name="status" value="לא מגיע" /> <span class="status-icon no">❌</span> לא מגיע (חובה סיבה)
-        </label>
-        <label class="radio">
-          <input type="radio" name="status" value="מגיע רק למשחק" /> <span class="status-icon partial">🟨</span> מגיע רק למשחק
-        </label>
+  <header class="topbar">📝 מענה למשימה</header>
+
+  <main class="container" id="main" style="visibility:hidden;">
+    <h2 id="taskTitle"></h2>
+    <div class="task-meta" id="taskMeta"></div>
+    <div class="task-notes" id="taskNotes" style="display:none;"></div>
+
+    <form id="responseForm">
+      <select id="memberSelect" required>
+        <option value="">בחר שם</option>
+      </select>
+      <div class="radio-group" id="radioContainer"></div>
+      <textarea id="note" placeholder="הערות / תגובות נוספות"></textarea>
+      <div style="text-align:center;">
+        <button type="submit" class="btn" id="submitBtn" style="width:60%">שלח תגובה</button>
       </div>
-
-      <label class="field-label">סיבה (אם לא מגיע): <span class="required" id="reasonReq" style="display:none">*</span></label>
-      <input id="reason" name="reason" type="text" placeholder="למה לא מגיע/ת?" />
-
-      <label class="field-label">הערות (אופציונלי)</label>
-      <textarea id="note" name="note" rows="3" placeholder="הערות"></textarea>
-
-      <input type="hidden" id="taskId" name="taskId" />
-      <input type="hidden" id="name" name="name" placeholder="הכנס שם" />
-
-      <label class="field-label">שם (כדי לזיהוי)</label>
-      <input id="inputName" type="text" placeholder="שם מלא" required />
-
-      <button id="saveBtn" class="btn btn-primary" type="submit">שמור</button>
     </form>
   </main>
 
-  <script src="assets/js/api.js"></script>
-  <script src="assets/js/app.js"></script>
+  <!-- Spacer -->
+  <div id="nav-spacer" aria-hidden="true"></div>
+
+  <!-- ניווט תחתון -->
+  <div class="bottom-nav" id="bottomNav">
+    <button class="nav-btn" onclick="location.href='index.html'">🏠 בית</button>
+    <button class="nav-btn" onclick="location.href='admin.html'">⚙️ ניהול</button>
+    <button class="nav-btn" data-logout title="יציאה">🚪 יציאה</button>
+  </div>
+
   <script>
-    APPS.initRespondPage();
-    // לוגיקה טופס
-    document.getElementById('responseForm').addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      await APPS.submitResponse();
-    });
+    function setNavPadding() {
+      const nav = document.getElementById('bottomNav');
+      if (!nav) return;
+      const h = Math.ceil(nav.getBoundingClientRect().height);
+      document.documentElement.style.setProperty('--nav-h', h + 'px');
+      const spacer = document.getElementById('nav-spacer');
+      if (spacer) spacer.style.height = `calc(${h}px + env(safe-area-inset-bottom, 0px))`;
+    }
+    addEventListener('DOMContentLoaded', setNavPadding);
+    addEventListener('resize', setNavPadding);
+    addEventListener('orientationchange', setNavPadding);
+  </script>
+
+  <script src="assets/js/api.js"></script>
+  <script>
+    // כפתור יציאה (אם מחובר)
+    (function wireLogout() {
+      const btn = document.querySelector('.bottom-nav .nav-btn[data-logout]');
+      if (!btn || btn._wired) return;
+      // מציגים רק אם יש טוקן
+      const hasToken = !!(API?.Auth?.token || localStorage.getItem('token'));
+      btn.style.display = hasToken ? 'inline-flex' : 'none';
+      btn.addEventListener('click', async () => {
+        try { await API.logout(); } catch { }
+        location.href = 'login.html?force=1';
+      });
+      btn._wired = true;
+    })();
+
+    function formatDate(v) { const d = new Date(v); return isNaN(d) ? v : d.toLocaleDateString('he-IL', { year: 'numeric', month: '2-digit', day: '2-digit' }); }
+    function formatTime(v) { const t = new Date(v); if (!isNaN(t)) return t.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }); if (/^\d{1,2}:\d{2}$/.test(v)) return v; return v; }
+    function hebDayName(v) { const d = new Date(v); const days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']; return isNaN(d) ? '' : days[d.getDay()]; }
+    const escAttr = s => String(s).replace(/"/g, '&quot;');
+
+    async function initRespondPage() {
+      try {
+        const data = await (API?.getInitData?.() || window.getCachedData?.() || {});
+        const q = new URLSearchParams(location.search);
+        const task = decodeURIComponent(q.get('task') || '');
+        const date = decodeURIComponent(q.get('date') || '');
+        const time = decodeURIComponent(q.get('time') || '');
+
+        document.getElementById('taskTitle').innerText = task;
+        document.getElementById('taskMeta').innerText = `${formatDate(date)} • ${hebDayName(date)} • שעה ${formatTime(time)}`;
+
+        const taskData = (data.tasks || []).find(r => r.משימה === task && r.תאריך === date && r.שעה === time);
+        if (taskData && taskData.דגשים) {
+          const tn = document.getElementById('taskNotes');
+          tn.style.display = 'block'; tn.textContent = '📌 ' + taskData.דגשים;
+        }
+
+        // טוען שמות חברים
+        const memberSelect = document.getElementById('memberSelect');
+        (data.members || []).forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m; opt.textContent = m; memberSelect.appendChild(opt);
+        });
+
+        // מייצר אופציות רדיו
+        let options = []; try { options = taskData?.אפשרויות ? JSON.parse(taskData.אפשרויות) : []; } catch { }
+        const radioContainer = document.getElementById('radioContainer');
+        radioContainer.innerHTML = options.map(opt => `
+          <label>
+            <input type="radio" name="status" value="${escAttr(opt.text)}" data-require="${opt.requireNote ? 'true' : 'false'}">
+            <span>${opt.text}</span>
+          </label>
+        `).join('');
+
+        const noteInput = document.getElementById('note');
+        radioContainer.addEventListener('change', () => {
+          const sel = document.querySelector('input[name="status"]:checked');
+          noteInput.required = sel?.dataset.require === 'true';
+        });
+
+        document.getElementById('responseForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const member = memberSelect.value;
+          const statusEl = document.querySelector('input[name="status"]:checked');
+          const note = noteInput.value.trim();
+
+          if (!member) { memberSelect.reportValidity(); return; }
+          if (!statusEl) { alert('בחר סטטוס'); return; }
+          if (statusEl.dataset.require === 'true' && !note) { noteInput.reportValidity(); return; }
+
+          const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.textContent = 'שולח...';
+          try {
+            await API.postResponse(task, date, time, statusEl.value, note, member);
+            alert('התשובה נשמרה'); location.href = 'index.html';
+          } catch (err) { console.error(err); alert('שליחה נכשלה, נסה שוב.'); }
+          finally { btn.disabled = false; btn.textContent = 'שלח תגובה'; }
+        });
+
+      } finally {
+        document.getElementById('splash').style.display = 'none';
+        document.getElementById('main').style.visibility = 'visible';
+        setNavPadding();
+      }
+    }
+    initRespondPage();
   </script>
 </body>
+
 </html>

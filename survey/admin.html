@@ -1,39 +1,701 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
+
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>סיכום הגעות - אדמין</title>
-  <link rel="stylesheet" href="assets/css/styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>⚙️ ניהול</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <style>
+    :root {
+      --nav-h: 64px;
+    }
+
+    /* פונט אחיד */
+    html,
+    body,
+    button,
+    input,
+    select,
+    textarea {
+      font-family: Calibri, "Segoe UI", Arial, sans-serif !important;
+    }
+
+    header.topbar {
+      background: #f1c40f;
+      color: #000;
+      font-weight: bold;
+      padding: 15px;
+      font-size: 1.6em;
+      text-align: center;
+      border-bottom: 2px solid #333;
+    }
+
+    .container {
+      max-width: 520px;
+      margin: auto;
+      padding: 0 14px calc(var(--nav-h) + 20px);
+      text-align: right;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 12px 0;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      background: #2c2c2c;
+      color: #eee;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+      min-width: 160px;
+      font-size: 1.05em;
+      transition: transform .05s ease-in-out;
+    }
+
+    .tab-btn:active {
+      transform: scale(0.98);
+    }
+
+    .tab-btn.active {
+      background: #f1c40f;
+      color: #000;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .panel-title {
+      color: #f1c40f;
+      font-weight: 800;
+      font-size: 1.15em;
+    }
+
+    /* Buttons – flat */
+    .btn {
+      background: #f1c40f;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      color: #000;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform .05s ease-in-out, opacity .2s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn[disabled] {
+      opacity: .6;
+      cursor: default;
+    }
+
+    .btn-secondary {
+      background: #2c2c2c;
+      color: #eee;
+    }
+
+    .btn-icon {
+      padding: 6px 9px;
+      line-height: 1;
+      font-size: .95em;
+      border-radius: 8px;
+      background: #333;
+      color: #fff;
+      min-width: auto;
+    }
+
+    /* תאימות לאחור לאייקון קטן */
+    .icon-btn {
+      background: #2b2b2b;
+      color: #eee;
+      border: 1px solid #444;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+    }
+
+    .icon-btn:hover {
+      background: #3a3a3a;
+    }
+
+    /* שמור – אייקון משמאל גם ב-RTL */
+    .btn-save {
+      background: #f1c40f;
+      color: #000;
+    }
+
+    .btn-save .ico {
+      order: -1;
+    }
+
+    .btn-cancel {
+      background: #2c2c2c;
+      color: #eee;
+    }
+
+    /* Task card */
+    .task-card {
+      background: #1f1f1f;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .35);
+      border: 1px solid #2b2b2b;
+    }
+
+    .task-title {
+      font-size: 1.15em;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #f1c40f;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .title-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .task-meta {
+      font-size: 1em;
+      color: #ddd;
+      margin-bottom: 8px;
+    }
+
+    .task-notes {
+      margin-top: 6px;
+      color: #f1c40f;
+      background: rgba(241, 196, 15, .08);
+      border: 1px dashed rgba(241, 196, 15, .35);
+      padding: 6px 8px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      align-items: center;
+    }
+
+    /* Edit inline */
+    .edit-area {
+      margin-top: 8px;
+    }
+
+    .edit-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .edit-row input,
+    .edit-row textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: #1f1f1f;
+      color: #ddd;
+      font-size: 1em;
+      font-family: Calibri, "Segoe UI", Arial, sans-serif;
+    }
+
+    .edit-row textarea {
+      min-height: 70px;
+    }
+
+    /* צבע איקון date/time ללבן */
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+    }
+
+    /* Responses */
+    .resp-wrap {
+      margin-top: 10px;
+      border-top: 1px solid #333;
+      padding-top: 10px;
+    }
+
+    /* כפתור רשימה ארוך, העתקה קטן */
+    .resp-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      /* רשימה מתרחב, העתקה קטן */
+      column-gap: 8px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .resp-header .resp-toggle {
+      width: 100%;
+    }
+
+    .resp-header .btn-icon {
+      width: auto;
+    }
+
+    .resp-body {
+      display: none;
+      background: #151515;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 8px;
+    }
+
+    .resp-open .resp-body {
+      display: block;
+    }
+
+    .resp-title {
+      color: #f1c40f;
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+
+    .resp-list {
+      font-size: .85em;
+      line-height: 1.3;
+    }
+
+    .resp-list ol {
+      margin: 2px 0 6px;
+      padding-left: 20px;
+    }
+
+    .resp-list li {
+      margin-bottom: 2px;
+    }
+
+    /* Loader */
+    #loader {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #121212;
+    }
+
+    .loader {
+      border: 6px solid #333;
+      border-top: 6px solid #f1c40f;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ניווט תחתון */
+    .nav-btn.is-disabled {
+      opacity: .45;
+      pointer-events: none;
+      filter: grayscale(.2);
+    }
+  </style>
 </head>
+
 <body>
-  <main class="container">
-    <header class="topbar">
-      <h1>סיכום הגעות</h1>
-      <p class="muted">בחר משימה להצגה</p>
-    </header>
+  <!-- Loader -->
+  <div id="loader">
+    <div class="loader"></div>
+  </div>
 
-    <section class="card">
-      <label class="field-label">בחר משימה:</label>
-      <select id="taskSelect"></select>
-    </section>
+  <div id="page" style="display:none;">
+    <header class="topbar">⚙️ ניהול</header>
 
-    <section id="summary" class="card-list">
-      <!-- קטגוריות ונתונים ימולאו כאן -->
-    </section>
+    <main class="container">
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="tasks">🗂️ משימות</button>
+        <button class="tab-btn" data-tab="members">👥 ניהול משתתפים</button>
+      </div>
 
-    <div class="actions">
-      <button id="copyWhatsapp" class="btn btn-primary">העתק לווטסאפ</button>
-      <button id="updateSheets" class="btn btn-secondary">עדכן ב-Google Sheets</button>
-    </div>
-  </main>
+      <!-- משימות -->
+      <section id="tab-tasks" class="tab-panel active">
+        <div class="panel-header">
+          <div class="panel-title">רשימת משימות</div>
+          <button class="btn" onclick="location.href='add-task.html'">➕ הוספת משימה</button>
+        </div>
+        <div id="tasksList"></div>
+      </section>
+
+      <!-- משתתפים -->
+      <section id="tab-members" class="tab-panel">
+        <div class="panel-header">
+          <div class="panel-title">ניהול משתתפים</div>
+        </div>
+        <div style="background:#1f1f1f;border:1px solid #2b2b2b;border-radius:12px;padding:12px;">
+          <div class="add-member-row" style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+            <input id="newMemberName" type="text" placeholder="שם חדש"
+              style="flex:1;padding:10px;border-radius:8px;border:1px solid #333;background:#1f1f1f;color:#ddd;box-sizing:border-box;">
+            <button class="btn-secondary" id="addMemberBtn">➕ הוסף</button>
+          </div>
+          <div id="membersList" class="pills" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Spacer -->
+  <div id="nav-spacer" aria-hidden="true"></div>
+
+  <!-- ניווט תחתון -->
+  <div class="bottom-nav" id="bottomNav">
+    <button class="nav-btn" onclick="location.href='index.html'">🏠 בית</button>
+    <button class="nav-btn" data-admin title="ניהול">⚙️ ניהול</button>
+    <button class="nav-btn" data-logout title="יציאה">🚪 יציאה</button>
+  </div>
+
+  <script>
+    function setNavPadding() {
+      const nav = document.getElementById('bottomNav');
+      if (!nav) return;
+      const h = Math.ceil(nav.getBoundingClientRect().height);
+      document.documentElement.style.setProperty('--nav-h', h + 'px');
+      const spacer = document.getElementById('nav-spacer');
+      if (spacer) spacer.style.height = `calc(${h}px + env(safe-area-inset-bottom, 0px))`;
+    }
+    addEventListener('DOMContentLoaded', setNavPadding);
+    addEventListener('resize', setNavPadding);
+    addEventListener('orientationchange', setNavPadding);
+  </script>
 
   <script src="assets/js/api.js"></script>
-  <script src="assets/js/app.js"></script>
+
   <script>
-    APPS.initAdminPage();
-    document.getElementById('copyWhatsapp').addEventListener('click', APPS.copyWhatsappText);
-    document.getElementById('updateSheets').addEventListener('click', APPS.syncToSheets);
+    /* ===== עזרים ===== */
+    function formatDate(v) { const d = new Date(v); return isNaN(d) ? v : d.toLocaleDateString('he-IL', { year: 'numeric', month: '2-digit', day: '2-digit' }); }
+    function formatTime(v) { const t = new Date(v); if (!isNaN(t)) return t.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }); if (/^\d{1,2}:\d{2}$/.test(v)) return v; return v || ''; }
+    function hebDayName(v) { const d = new Date(v); const days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']; return isNaN(d) ? '' : days[d.getDay()]; }
+    const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;");
+
+    function toDateInputValue(s) {
+      if (!s) return '';
+      const d = new Date(s);
+      if (!isNaN(d)) return d.toISOString().slice(0, 10);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+      return s;
+    }
+    function toTimeInputValue(s) {
+      if (!s) return '';
+      if (/^\d{2}:\d{2}$/.test(s)) return s;
+      const d = new Date(s);
+      if (!isNaN(d)) {
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mm = String(d.getMinutes()).padStart(2, '0');
+        return `${hh}:${mm}`;
+      }
+      return s;
+    }
+
+    /* ===== תגובות ===== */
+    function groupResponsesForTask(taskObj, responses, allMembers) {
+      const filtered = (responses || []).filter(r => r.משימה === taskObj.משימה && r.תאריך === taskObj.תאריך && r.שעה === taskObj.שעה);
+      const grouped = {}, counts = { arrive: 0, notArrive: 0 }, responded = new Set();
+      filtered.forEach(r => {
+        const status = (r.סטטוס || '').trim(); const name = (r.שם || '').trim(); const note = r.הערה == null ? '' : String(r.הערה).trim();
+        if (!status || !name) return;
+        responded.add(name);
+        if (!grouped[status]) grouped[status] = [];
+        grouped[status].push(note ? `${name} - הערה` : name);
+        if (status.includes('לא')) counts.notArrive++; else if (status.includes('מגיע')) counts.arrive++;
+      });
+      Object.keys(grouped).forEach(k => grouped[k].sort((a, b) => a.localeCompare(b, 'he')));
+      const notResponded = (allMembers || []).filter(m => !responded.has(m));
+      return { grouped, counts, notResponded };
+    }
+    function makeShareText(taskObj, grouped, counts, notResponded) {
+      const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)}`;
+      const base = ["מגיע", "מגיע רק למשחק", "לא מגיע"];
+      const order = [...base, ...Object.keys(grouped).filter(k => !base.includes(k)).sort()];
+      const lines = [`*${title}*`, ''];
+      order.forEach(k => { const arr = grouped[k]; if (arr && arr.length) { lines.push(`*${k}:*`); arr.forEach((v, i) => lines.push(`${i + 1}. ${v}`)); lines.push(''); } });
+      lines.push(`סה"כ מגיע: ${counts.arrive || 0}`);
+      lines.push(`סה"כ לא מגיע: ${counts.notArrive || 0}`);
+      if (notResponded?.length) { lines.push(`סה"כ לא הגיבו: ${notResponded.length}`); lines.push('*לא הגיבו:*'); notResponded.forEach((n, i) => lines.push(`${i + 1}. ${n}`)); }
+      return lines.join('\n');
+    }
+    function renderResponsesBlock(taskObj, grouped, counts, notResponded, idx) {
+      const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)}`;
+      const base = ["מגיע", "מגיע רק למשחק", "לא מגיע"];
+      const order = [...base, ...Object.keys(grouped).filter(k => !base.includes(k)).sort()];
+      const parts = [];
+      order.forEach(k => {
+        const arr = grouped[k]; if (!arr || !arr.length) return;
+        parts.push(`<div><div><b>*${k}:*</b></div><ol>${arr.map(v => `<li>${esc(v)}</li>`).join("")}</ol></div>`);
+      });
+      if (notResponded?.length) parts.push(`<div><b>*לא הגיבו:*</b> (${notResponded.length})<ol>${notResponded.map(n => `<li>${esc(n)}</li>`).join("")}</ol></div>`);
+      parts.push(`<div>סה"כ מגיע: ${counts.arrive || 0}</div>`);
+      parts.push(`<div>סה"כ לא מגיע: ${counts.notArrive || 0}</div>`);
+      const share = makeShareText(taskObj, grouped, counts, notResponded);
+      const id = `resp_${idx}`;
+      return `
+        <div class="resp-wrap" id="${id}">
+          <div class="resp-header">
+            <button class="btn btn-secondary resp-toggle" onclick="toggleResp('${id}')">▶️ רשימה</button>
+            <button class="btn btn-icon" onclick="copyShare('${encodeURIComponent(share)}')" title="העתק">📋</button>
+          </div>
+          <div class="resp-body">
+            <div class="resp-title">${esc(title)}</div>
+            <div class="resp-list">${parts.join("")}</div>
+          </div>
+        </div>
+      `;
+    }
+    function toggleResp(id) {
+      const el = document.getElementById(id); if (!el) return;
+      el.classList.toggle('resp-open');
+      const b = el.querySelector('.resp-toggle');
+      if (b) b.textContent = el.classList.contains('resp-open') ? '🔽 רשימה' : '▶️ רשימה';
+    }
+    async function copyShare(encoded) {
+      const txt = decodeURIComponent(encoded);
+      try { await navigator.clipboard.writeText(txt); alert("הועתק ללוח"); }
+      catch {
+        const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove(); alert("הועתק ללוח (fallback)");
+      }
+    }
+
+    /* ===== נתונים ===== */
+    let gData = { tasks: [], responses: [], members: [] };
+    async function loadAll() { const data = await (API?.getInitData?.() ?? {}); gData.tasks = data.tasks || []; gData.responses = data.responses || data.Responses || []; gData.members = data.members || data.Members || []; }
+
+    /* ===== רנדר ===== */
+    function renderMembers() {
+      const host = document.getElementById('membersList'); host.innerHTML = '';
+      gData.members.forEach(name => {
+        const pill = document.createElement('span');
+        pill.style.cssText = 'display:inline-flex;align-items:center;gap:8px;background:#1f1f1f;border:1px solid #2b2b2b;color:#ddd;border-radius:999px;padding:6px 10px;';
+        pill.innerHTML = `<span>${esc(name)}</span><button class="pill-del" style="appearance:none;border:none;background:#2c2c2c;color:#eee;border-radius:999px;padding:4px 8px;cursor:pointer;font-size:.95em;">🗑️</button>`;
+        pill.querySelector('.pill-del').addEventListener('click', async () => {
+          if (!confirm(`למחוק את "${name}"?`)) return;
+          await API.removeMember({ name });
+          await loadAll(); renderMembers();
+        });
+        host.appendChild(pill);
+      });
+    }
+
+    function renderTasks() {
+      const host = document.getElementById('tasksList');
+      const tasks = [...gData.tasks].sort((a, b) => new Date(a.תאריך) - new Date(b.תאריך));
+      if (!tasks.length) { host.innerHTML = '<p style="color:#aaa;">אין משימות</p>'; return; }
+
+      host.innerHTML = tasks.map((t, i) => {
+        const { grouped, counts, notResponded } = groupResponsesForTask(t, gData.responses, gData.members);
+        const resp = renderResponsesBlock(t, grouped, counts, notResponded, i);
+        const meta = `${formatDate(t.תאריך)} • ${hebDayName(t.תאריך)} • שעה ${formatTime(t.שעה)}`;
+        const notes = t.דגשים ? `<div class="task-notes">📌 ${esc(t.דגשים)}</div>` : '';
+
+        const dateVal = toDateInputValue(t.תאריך);
+        const timeVal = toTimeInputValue(t.שעה);
+
+        return `
+          <div class="task-card"
+            data-task="${esc(t.משימה)}"
+            data-date="${esc(toDateInputValue(t.תאריך))}"
+            data-time="${esc(toTimeInputValue(t.שעה))}"
+            data-options='${esc(t.אפשרויות || "[]")}'>
+            <div class="task-title">
+              <span>${i + 1}. ${esc(t.משימה)}</span>
+              <div class="title-actions">
+                <button class="btn-icon btn-edit" title="ערוך">✏️</button>
+                <button class="btn-icon trash" title="מחק">🗑️</button>
+              </div>
+            </div>
+            <div class="task-meta">${meta}</div>
+            ${notes}
+            <div class="edit-area" style="display:none;">
+              <div class="edit-row">
+                <input type="text" class="inp-name" value="${esc(t.משימה)}" placeholder="שם המשימה">
+                <input type="date" class="inp-date" value="${esc(dateVal)}">
+                <input type="time" class="inp-time" value="${esc(timeVal)}">
+                <textarea class="inp-notes" placeholder="דגשים / פרטי אירוע">${esc(t.דגשים || "")}</textarea>
+              </div>
+              <div class="actions">
+                <button class="btn btn-cancel">בטל</button>
+                <button class="btn btn-save"><span class="ico">💾</span><span>שמור</span></button>
+              </div>
+            </div>
+            ${resp}
+          </div>`;
+      }).join("");
+
+      // אירועים: מחיקה / עריכה / ביטול / שמירה
+      host.querySelectorAll('.task-card').forEach(card => {
+        const oldTask = card.dataset.task;
+        const oldDate = card.dataset.date;
+        const oldTime = card.dataset.time;
+        const options = card.dataset.options || "[]";
+
+        // מחיקה
+        card.querySelector('.trash').addEventListener('click', async () => {
+          if (!confirm(`למחוק את "${oldTask}"? זה ימחק גם תגובות.`)) return;
+          await API.removeTask({ task: String(oldTask).trim(), date: oldDate, time: oldTime });
+          await loadAll(); renderTasks();
+        });
+
+        // עריכה toggles
+        const editBtn = card.querySelector('.btn-edit');
+        const editArea = card.querySelector('.edit-area');
+        editBtn.addEventListener('click', () => { editArea.style.display = 'block'; });
+
+        // ביטול
+        card.querySelector('.btn-cancel').addEventListener('click', () => { editArea.style.display = 'none'; });
+
+        // שמירה
+        card.querySelector('.btn-save').addEventListener('click', async () => {
+          const newTask = card.querySelector('.inp-name').value.trim();
+          const newDate = card.querySelector('.inp-date').value;
+          const newTime = card.querySelector('.inp-time').value;
+          const newNotes = card.querySelector('.inp-notes').value.trim();
+          if (!newTask || !newDate) { alert('שם משימה ותאריך חובה'); return; }
+
+          const payload = { oldTask, oldDate, oldTime, options, newTask, newDate, newTime, notes: newNotes };
+          try {
+            if (typeof API.editTask === 'function') { await API.editTask(payload); }
+            else if (typeof API.updateTask === 'function') { await API.updateTask(payload); }
+            else {
+              await API.removeTask({ task: oldTask, date: oldDate, time: oldTime });
+              await API.addTask({ 'משימה': newTask, 'תאריך': newDate, 'שעה': newTime, 'אפשרויות': options, 'דגשים': newNotes });
+            }
+            await loadAll(); renderTasks();
+          } catch (err) {
+            console.error(err);
+            alert('שמירה נכשלה, בדוק את ה־API (editTask/updateTask).');
+          }
+        });
+      });
+    }
+
+    /* ===== Tabs ===== */
+    addEventListener('click', (e) => {
+      const btn = e.target.closest('.tab-btn'); if (!btn) return;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + btn.dataset.tab));
+      setNavPadding();
+    });
+
+    /* ===== Members actions ===== */
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('addMemberBtn').addEventListener('click', async () => {
+        const inp = document.getElementById('newMemberName');
+        const name = inp.value.trim();
+        if (!name) return inp.reportValidity();
+        await API.addMember({ name }); inp.value = '';
+        await loadAll(); renderMembers();
+      });
+    });
+
+    /* ===== Guard + Init ===== */
+    async function init() {
+      try {
+        await loadAll();
+        renderTasks();
+        renderMembers();
+      } catch (e) {
+        console.error(e);
+        alert('שגיאה בטעינת הנתונים');
+      } finally {
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('page').style.display = 'block';
+        setNavPadding();
+      }
+    }
+
+    (async function guardAdmin() {
+      try {
+        // ודא התחברות
+        const hasToken = !!(API?.Auth?.token || localStorage.getItem('token'));
+        if (!hasToken) { location.href = 'login.html?force=1&next=admin'; return; }
+
+        const me = await API.me();
+        if (!me?.success || me.role !== 'admin') { location.href = 'index.html?denied=1'; return; }
+
+        // הצגת השם בכותרת
+        const top = document.querySelector('header.topbar');
+        if (top) {
+          const span = document.createElement('span');
+          span.style.cssText = 'font-size:.8em;margin-inline-start:8px;color:#000;opacity:.85;';
+          span.textContent = me.displayName ? `(${me.displayName} • מנהל)` : `(${me.username} • מנהל)`;
+          top.appendChild(span);
+        }
+
+        // כפתור יציאה בניווט
+        const logoutBtn = document.querySelector('.bottom-nav .nav-btn[data-logout]');
+        if (logoutBtn && !logoutBtn._wired) {
+          logoutBtn.addEventListener('click', async () => {
+            try { await API.logout(); } catch { }
+            location.href = 'login.html?force=1';
+          });
+          logoutBtn._wired = true;
+        }
+
+        // כפתור "ניהול" בדף ניהול — לא חובה פעולה (אפשר להשאיר ללא onclick)
+        const adminBtn = document.querySelector('.bottom-nav .nav-btn[data-admin]');
+        if (adminBtn) {
+          adminBtn.classList.remove('is-disabled');
+          adminBtn.title = 'ניהול';
+        }
+
+        await init();
+      } catch (e) {
+        console.error('admin guard error:', e);
+        location.href = 'index.html?err=auth';
+      }
+    })();
   </script>
 </body>
+
 </html>
