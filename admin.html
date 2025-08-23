@@ -387,11 +387,13 @@
   <div id="nav-spacer" aria-hidden="true"></div>
 
   <!-- ניווט תחתון -->
-  <div class="bottom-nav" id="bottomNav">
-    <button class="nav-btn" onclick="location.href='index.html'">🏠 בית</button>
-    <button class="nav-btn" data-admin title="ניהול">⚙️ ניהול</button>
-    <button class="nav-btn" data-logout title="יציאה">🚪 יציאה</button>
-  </div>
+<div class="bottom-nav" id="bottomNav">
+  <button class="nav-btn" onclick="location.href='home.html'">🏠 בית</button>
+  <button class="nav-btn" data-admin>⚙️ ניהול</button>
+  <!-- איפה שיש גם יציאה -->
+  <button class="nav-btn" data-logout title="יציאה">🚪 יציאה</button>
+</div>
+
 
   <script>
     function setNavPadding() {
@@ -658,10 +660,10 @@
       try {
         // ודא התחברות
         const hasToken = !!(API?.Auth?.token || localStorage.getItem('token'));
-        if (!hasToken) { location.href = 'login.html?force=1&next=admin'; return; }
+        if (!hasToken) { location.href = 'index.html?force=1&next=admin'; return; }
 
         const me = await API.me();
-        if (!me?.success || me.role !== 'admin') { location.href = 'index.html?denied=1'; return; }
+        if (!me?.success || me.role !== 'admin') { location.href = 'home.html?denied=1'; return; }
 
         // הצגת השם בכותרת
         const top = document.querySelector('header.topbar');
@@ -677,7 +679,7 @@
         if (logoutBtn && !logoutBtn._wired) {
           logoutBtn.addEventListener('click', async () => {
             try { await API.logout(); } catch { }
-            location.href = 'login.html?force=1';
+            location.href = 'index.html?force=1';
           });
           logoutBtn._wired = true;
         }
@@ -692,7 +694,7 @@
         await init();
       } catch (e) {
         console.error('admin guard error:', e);
-        location.href = 'index.html?err=auth';
+        location.href = 'home.html?err=auth';
       }
     })();
   </script>

@@ -180,11 +180,13 @@
   <div id="nav-spacer" aria-hidden="true"></div>
 
   <!-- ניווט תחתון -->
-  <div class="bottom-nav" id="bottomNav">
-    <button class="nav-btn" onclick="location.href='index.html'">🏠 בית</button>
-    <button class="nav-btn" onclick="location.href='admin.html'">⚙️ ניהול</button>
-    <button class="nav-btn" data-logout title="יציאה">🚪 יציאה</button>
-  </div>
+<div class="bottom-nav" id="bottomNav">
+  <button class="nav-btn" onclick="location.href='home.html'">🏠 בית</button>
+  <button class="nav-btn" data-admin>⚙️ ניהול</button>
+  <!-- איפה שיש גם יציאה -->
+  <button class="nav-btn" data-logout title="יציאה">🚪 יציאה</button>
+</div>
+
 
   <script>
     function setNavPadding() {
@@ -211,7 +213,7 @@
       btn.style.display = hasToken ? 'inline-flex' : 'none';
       btn.addEventListener('click', async () => {
         try { await API.logout(); } catch { }
-        location.href = 'login.html?force=1';
+        location.href = 'index.html?force=1';
       });
       btn._wired = true;
     })();
@@ -274,7 +276,7 @@
           const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.textContent = 'שולח...';
           try {
             await API.postResponse(task, date, time, statusEl.value, note, member);
-            alert('התשובה נשמרה'); location.href = 'index.html';
+            alert('התשובה נשמרה'); location.href = 'home.html';
           } catch (err) { console.error(err); alert('שליחה נכשלה, נסה שוב.'); }
           finally { btn.disabled = false; btn.textContent = 'שלח תגובה'; }
         });

@@ -141,11 +141,13 @@
   <div id="nav-spacer" aria-hidden="true"></div>
 
   <!-- ניווט תחתון -->
-  <div class="bottom-nav" id="bottomNav">
-    <button class="nav-btn" onclick="location.href='home.html'">🏠 בית</button>
-    <button class="nav-btn" data-admin>⚙️ ניהול</button>
-    <button class="nav-btn" data-logout title="יציאה">🚪 יציאה</button>
-  </div>
+ <div class="bottom-nav" id="bottomNav">
+  <button class="nav-btn" onclick="location.href='home.html'">🏠 בית</button>
+  <button class="nav-btn" data-admin>⚙️ ניהול</button>
+  <!-- איפה שיש גם יציאה -->
+  <button class="nav-btn" data-logout title="יציאה">🚪 יציאה</button>
+</div>
+
 
   <script>
     function setNavPadding(){
@@ -441,7 +443,7 @@
         if (!logoutBtn._wired){
           logoutBtn.addEventListener('click', async ()=>{
             try{ await API.logout(); }catch{}
-            location.href = 'login.html?force=1';
+            location.href = 'index.html?force=1';
           });
           logoutBtn._wired = true;
         }
