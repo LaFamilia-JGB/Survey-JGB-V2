@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>📋 משימות</title>
   <link rel="stylesheet" href="assets/css/styles.css" />
   <style>
-    html, body {
+    html,
+    body {
       height: auto;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
     }
+
     body {
       background: #121212;
       color: #ccc;
@@ -20,25 +23,32 @@
     }
 
     header.topbar {
-      background: #f1c40f;
-      padding: 15px;
-      font-size: 1.6em;
-      font-weight: bold;
-      color: #000;
-      border-bottom: 2px solid #333;
       position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      /* הטקסט נשאר ממורכז */
+      gap: 8px;
     }
-    /* ברכה בפינה (RTL) */
-    #greet{
-      position:absolute;
-      top:50%;
-      transform:translateY(-50%);
-      inset-inline-start:10px;
-      font-size:.85em;
-      color:#000;
-      opacity:.9;
-      white-space:nowrap;
+
+    /* איזור הברכה – בצד ימין (RTL), עם קיצור אם ארוך מדי */
+    #greet {
+      position: absolute;
+      inset-inline-start: 8px;
+      /* ימין ב־RTL */
+      top: 50%;
+      transform: translateY(-50%);
+      max-width: 42vw;
+      /* לא לדרוס את הכותרת */
+      font-size: clamp(.75rem, 2.6vw, .95rem);
+      line-height: 1.1;
+      color: #000;
+      opacity: .9;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
+
 
     .container {
       padding: 15px;
@@ -54,83 +64,179 @@
       border-radius: 12px;
       padding: 14px;
       margin-bottom: 14px;
-      box-shadow: 0 2px 6px rgba(0,0,0,.35);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .35);
       text-align: right;
       border: 1px solid #2b2b2b;
     }
-    .task-title { font-size:1.25em; font-weight:700; margin-bottom:6px; color:#f1c40f; }
-    .task-meta  { font-size:1em;   color:#ddd;      margin-bottom:8px; }
 
-    .task-notes{
-      margin-top:6px; color:#f1c40f;
-      background:rgba(241,196,15,.08);
-      border:1px dashed rgba(241,196,15,.35);
-      padding:6px 8px; border-radius:6px;
-      text-align:right; font-size:.95em; line-height:1.35;
-      white-space:pre-wrap;
+    .task-title {
+      font-size: 1.25em;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #f1c40f;
     }
 
-    .btn{
-      background:#f1c40f; border:none; padding:8px 14px; border-radius:8px;
-      cursor:pointer; font-size:1.05em; margin-top:8px; color:#000; font-weight:700;
+    .task-meta {
+      font-size: 1em;
+      color: #ddd;
+      margin-bottom: 8px;
     }
-    .btn-secondary{ background:#2c2c2c; color:#eee; }
-    .btn-icon{
-      padding:6px 10px; font-size:.95em; line-height:1; border-radius:8px; width:auto; min-width:0;
-      background:#333; color:#fff;
+
+    .task-notes {
+      margin-top: 6px;
+      color: #f1c40f;
+      background: rgba(241, 196, 15, .08);
+      border: 1px dashed rgba(241, 196, 15, .35);
+      padding: 6px 8px;
+      border-radius: 6px;
+      text-align: right;
+      font-size: .95em;
+      line-height: 1.35;
+      white-space: pre-wrap;
     }
-    .actions{ display:flex; gap:8px; flex-wrap:wrap; }
+
+    .btn {
+      background: #f1c40f;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1.05em;
+      margin-top: 8px;
+      color: #000;
+      font-weight: 700;
+    }
+
+    .btn-secondary {
+      background: #2c2c2c;
+      color: #eee;
+    }
+
+    .btn-icon {
+      padding: 6px 10px;
+      font-size: .95em;
+      line-height: 1;
+      border-radius: 8px;
+      width: auto;
+      min-width: 0;
+      background: #333;
+      color: #fff;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
 
     /* כרטיסיית תגובות */
-    .resp-wrap{ margin-top:10px; border-top:1px solid #333; padding-top:10px; }
-    .resp-header{ display:flex; gap:8px; align-items:center; }
-    .resp-body{
-      display:none; background:#151515; border:1px solid #2a2a2a;
-      border-radius:10px; padding:10px; margin-top:8px;
+    .resp-wrap {
+      margin-top: 10px;
+      border-top: 1px solid #333;
+      padding-top: 10px;
     }
-    .resp-open .resp-body{ display:block; }
-    .resp-title{ color:#f1c40f; font-weight:700; margin:0 0 6px 0; }
-    .resp-list{ font-size:.85em; line-height:1.28; }
-    .resp-list section{ margin-bottom:6px; }
-    .resp-list .h{ margin:0 0 2px 0; }
-    .resp-list ol{ margin:2px 0 6px 0; padding-left:20px; }
-    .resp-list li{ margin-bottom:2px; }
+
+    .resp-header {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .resp-body {
+      display: none;
+      background: #151515;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 8px;
+    }
+
+    .resp-open .resp-body {
+      display: block;
+    }
+
+    .resp-title {
+      color: #f1c40f;
+      font-weight: 700;
+      margin: 0 0 6px 0;
+    }
+
+    .resp-list {
+      font-size: .85em;
+      line-height: 1.28;
+    }
+
+    .resp-list section {
+      margin-bottom: 6px;
+    }
+
+    .resp-list .h {
+      margin: 0 0 2px 0;
+    }
+
+    .resp-list ol {
+      margin: 2px 0 6px 0;
+      padding-left: 20px;
+    }
+
+    .resp-list li {
+      margin-bottom: 2px;
+    }
 
     /* לואדר */
-    #loader{
-      display:flex; justify-content:center; align-items:center;
-      height:100vh; background:#121212;
+    #loader {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #121212;
     }
-    .loader{
-      border:6px solid #333; border-top:6px solid #f1c40f; border-radius:50%;
-      width:50px; height:50px; animation:spin .7s linear infinite;
+
+    .loader {
+      border: 6px solid #333;
+      border-top: 6px solid #f1c40f;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin .7s linear infinite;
     }
-    @keyframes spin{ to{ transform:rotate(360deg) } }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
 
     /* ניווט תחתון – ממרכז אייקון+טקסט */
-    .bottom-nav .nav-btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:6px;
-      text-align:center;
+    .bottom-nav .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      text-align: center;
     }
+
     /* מצב מנוטרל לכפתור ניהול */
-    .nav-btn.is-disabled{
-      opacity:.45; pointer-events:none; filter:grayscale(.2);
+    .nav-btn.is-disabled {
+      opacity: .45;
+      pointer-events: none;
+      filter: grayscale(.2);
     }
   </style>
 </head>
 
 <body>
   <!-- טעינה -->
-  <div id="loader"><div class="loader"></div></div>
+  <div id="loader">
+    <div class="loader"></div>
+  </div>
 
   <!-- כותרת -->
   <header class="topbar">
     📋 רשימת משימות
     <span id="greet"></span>
   </header>
+
 
   <!-- תוכן -->
   <div id="page" style="display:none;">
@@ -141,16 +247,16 @@
   <div id="nav-spacer" aria-hidden="true"></div>
 
   <!-- ניווט תחתון -->
- <div class="bottom-nav" id="bottomNav">
-  <button class="nav-btn" onclick="location.href='home.html'">🏠 בית</button>
-  <button class="nav-btn" data-admin>⚙️ ניהול</button>
-  <!-- איפה שיש גם יציאה -->
-  <button class="nav-btn" data-logout title="יציאה">🚪 יציאה</button>
-</div>
+  <div class="bottom-nav" id="bottomNav">
+    <button class="nav-btn" onclick="location.href='home.html'">🏠 בית</button>
+    <button class="nav-btn" data-admin>⚙️ ניהול</button>
+    <!-- איפה שיש גם יציאה -->
+    <button class="nav-btn" data-logout title="יציאה">🚪 יציאה</button>
+  </div>
 
 
   <script>
-    function setNavPadding(){
+    function setNavPadding() {
       const nav = document.getElementById('bottomNav');
       if (!nav) return;
       const h = Math.ceil(nav.getBoundingClientRect().height);
@@ -176,189 +282,187 @@
     }
 
     // עזרים
-    function formatDate(v){ const d=new Date(v); return isNaN(d)?v:d.toLocaleDateString('he-IL',{year:'numeric',month:'2-digit',day:'2-digit'}); }
-    function formatTime(v){ const t=new Date(v); if(!isNaN(t)) return t.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}); if(/^\d{1,2}:\d{2}$/.test(v)) return v; return v; }
-    function hebDayName(v){ const d=new Date(v); const days=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת']; return isNaN(d)?'':days[d.getDay()]; }
-    function escapeHtml(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;"); }
-    function truncate(str,max=200){ if(!str) return ""; const s=String(str); return s.length>max ? s.slice(0,max-1)+"…" : s; }
+    function formatDate(v) { const d = new Date(v); return isNaN(d) ? v : d.toLocaleDateString('he-IL', { year: 'numeric', month: '2-digit', day: '2-digit' }); }
+    function formatTime(v) { const t = new Date(v); if (!isNaN(t)) return t.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }); if (/^\d{1,2}:\d{2}$/.test(v)) return v; return v; }
+    function hebDayName(v) { const d = new Date(v); const days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']; return isNaN(d) ? '' : days[d.getDay()]; }
+    function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+    function truncate(str, max = 200) { if (!str) return ""; const s = String(str); return s.length > max ? s.slice(0, max - 1) + "…" : s; }
 
     // קיבוץ תגובות + מי לא הגיב
-    function groupResponsesForTask(taskObj, responses, allMembers){
-      const filtered = (responses||[]).filter(r =>
-        String(r.משימה||'')===String(taskObj.משימה||'') &&
-        String(r.תאריך||'')===String(taskObj.תאריך||'') &&
-        String(r.שעה  ||'')===String(taskObj.שעה  ||'')
+    function groupResponsesForTask(taskObj, responses, allMembers) {
+      const filtered = (responses || []).filter(r =>
+        String(r.משימה || '') === String(taskObj.משימה || '') &&
+        String(r.תאריך || '') === String(taskObj.תאריך || '') &&
+        String(r.שעה || '') === String(taskObj.שעה || '')
       );
 
       const grouped = {};           // status -> [ "שם", "שם - הערה", ... ]
       const responded = new Set();
 
-      filtered.forEach(r=>{
-        const status = String(r.סטטוס||r.status||'').trim();
-        const name   = String(r.שם    ||r.member||'').trim();
-        const note   = String(r.הערה  ||r.note  ||'').trim();
+      filtered.forEach(r => {
+        const status = String(r.סטטוס || r.status || '').trim();
+        const name = String(r.שם || r.member || '').trim();
+        const note = String(r.הערה || r.note || '').trim();
         if (!status || !name) return;
 
         responded.add(name);
         const display = note ? `${name} - הערה` : name;
-        if (!grouped[status]) grouped[status]=[];
+        if (!grouped[status]) grouped[status] = [];
         grouped[status].push(display);
       });
 
-      Object.keys(grouped).forEach(k=>{
-        grouped[k].sort((a,b)=>String(a).localeCompare(String(b),'he'));
+      Object.keys(grouped).forEach(k => {
+        grouped[k].sort((a, b) => String(a).localeCompare(String(b), 'he'));
       });
 
-      const notResponded = (allMembers||[])
-        .filter(m=>!responded.has(String(m).trim()))
-        .sort((a,b)=>String(a).localeCompare(String(b),'he'));
+      const notResponded = (allMembers || [])
+        .filter(m => !responded.has(String(m).trim()))
+        .sort((a, b) => String(a).localeCompare(String(b), 'he'));
 
       return { grouped, notResponded };
     }
 
     // ניווט למסך מענה
-    function openRespond(encTask, encDate, encTime){
+    function openRespond(encTask, encDate, encTime) {
       location.href = `respond.html?task=${encTask}&date=${encDate}&time=${encTime}`;
     }
 
     // טקסט לשיתוף – מותאם תפקיד
-    function makeShareText(taskObj, grouped, notResponded){
-      const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)}`;
-      const lines = [`*${title}*`, ''];
-      const order = Object.keys(grouped).sort((a,b)=>String(a).localeCompare(String(b),'he'));
+function makeShareText(taskObj, grouped, notResponded) {
+  const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)}`;
+  const lines = [`*${title}*`, ''];
 
-      if (gIsAdmin){
-        let running=1;
-        order.forEach(key=>{
-          const arr=grouped[key]; if(!arr||!arr.length) return;
-          lines.push(`*${key}:*`);
-          arr.forEach(item=>{ lines.push(`${running}. ${item}`); running++; });
-          lines.push('');
-          lines.push(`סה"כ ${key}: ${arr.length}`);
-          lines.push('');
-        });
-        if (notResponded?.length){
-          lines.push(`*לא הגיבו:*`);
-          notResponded.forEach((nm,i)=>lines.push(`${i+1}. ${nm}`));
-        }
-        lines.push(`סה"כ לא הגיבו: ${notResponded?.length||0}`);
-      } else {
-        order.forEach(key=>{
-          const arr=grouped[key]; if(!arr||!arr.length) return;
-          lines.push(`*${key}:* ${arr.length}`);
-        });
-        lines.push(`סה"כ לא הגיבו: ${notResponded?.length||0}`);
-      }
-      return lines.join("\n");
+  // סדר כותרות עקבי (אלפביתי) לפי מה שקיים בפועל
+  const order = Object.keys(grouped).sort((a, b) => String(a).localeCompare(String(b), 'he'));
+
+  if (gIsAdmin) {
+    // אדמין: שמות + מספור מתמשך + סיכומים
+    let running = 1;
+    order.forEach(key => {
+      const arr = grouped[key];
+      if (!arr || !arr.length) return;
+      lines.push(`*${key}:*`);
+      arr.forEach(item => { lines.push(`${running}. ${item}`); running++; });
+      lines.push('');
+      lines.push(`סה"כ ${key}: ${arr.length}`);
+      lines.push('');
+    });
+  } else {
+    // לא-אדמין: רק סיכומי כל אופציה (בלי שמות)
+    order.forEach(key => {
+      const arr = grouped[key];
+      if (!arr || !arr.length) return;
+      lines.push(`*${key}:* ${arr.length}`);
+    });
+  }
+
+  // לא הגיבו
+  lines.push(`סה"כ לא הגיבו: ${notResponded?.length || 0}`);
+
+  return lines.join("\n");
+}
+function renderResponsesBlock(taskObj, grouped, idx, notResponded) {
+  const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${hebDayName(taskObj.תאריך)} • שעה ${formatTime(taskObj.שעה)}`;
+  const order = Object.keys(grouped).sort((a, b) => String(a).localeCompare(String(b), 'he'));
+
+  const sections = [];
+  let runningIndex = 1;
+
+  order.forEach(key => {
+    const arr = grouped[key];
+    if (!arr || !arr.length) return;
+
+    if (gIsAdmin) {
+      // אדמין – מציג שמות (מספור מתמשך בין הכותרות)
+      const items = arr.map(item => `<li>${escapeHtml(item)}</li>`).join("");
+      sections.push(`
+        <section>
+          <div class="h"><b>*${escapeHtml(key)}:*</b></div>
+          <ol start="${runningIndex}">${items}</ol>
+        </section>
+      `);
+      runningIndex += arr.length;
+    } else {
+      // לא-אדמין – מציג רק סכום לכל כותרת (ללא שמות)
+      sections.push(`
+        <section>
+          <div class="h"><b>*${escapeHtml(key)}:*</b> ${arr.length}</div>
+        </section>
+      `);
     }
+  });
 
-    // בלוק תגובות בכרטיס – Admin: שמות+מספור; Non-admin: מונים בלבד
-    function renderResponsesBlock(taskObj, grouped, idx, notResponded){
-      const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${hebDayName(taskObj.תאריך)} • שעה ${formatTime(taskObj.שעה)}`;
-      const order = Object.keys(grouped).sort((a,b)=>String(a).localeCompare(String(b),'he'));
-
-      const sections=[];
-      let runningIndex=1;
-
-      order.forEach(key=>{
-        const arr=grouped[key]; if(!arr||!arr.length) return;
-
-        if (gIsAdmin){
-          const items = arr.map(item=>`<li>${escapeHtml(item)}</li>`).join("");
-          sections.push(`
-            <section>
-              <div class="h"><b>*${escapeHtml(key)}:*</b></div>
-              <ol start="${runningIndex}">${items}</ol>
-            </section>
-          `);
-          runningIndex += arr.length;
-        } else {
-          sections.push(`
-            <section>
-              <div class="h"><b>*${escapeHtml(key)}:*</b> ${arr.length}</div>
-            </section>
-          `);
-        }
-      });
-
-      // לא הגיבו
-      let notRespHtml='';
-      if (Array.isArray(notResponded)){
-        if (gIsAdmin && notResponded.length){
-          notRespHtml = `
-            <section>
-              <div class="h"><b>*לא הגיבו ❓:*</b> (${notResponded.length})</div>
-              <ul>${notResponded.map(n=>`<li>${escapeHtml(n)}</li>`).join('')}</ul>
-            </section>
-          `;
-        } else {
-          notRespHtml = `
-            <section>
-              <div class="h"><b>*סה"כ לא הגיבו ❓:*</b> ${notResponded.length}</div>
-            </section>
-          `;
-        }
-      }
-
-      let totalsHtml='';
-      if (gIsAdmin){
-        totalsHtml = order.map(k=>`<div>סה"כ ${escapeHtml(k)}: ${grouped[k]?.length||0}</div>`).join("");
-      }
-
-      const wrapId = `resp_${idx}`;
-      const shareText = makeShareText(taskObj, grouped, notResponded);
-
-      return `
-        <div class="resp-wrap" id="${wrapId}">
-          <div class="resp-header">
-            <button class="btn btn-secondary resp-toggle" onclick="toggleResp('${wrapId}')">▶️ רשימה</button>
-            <button class="btn btn-icon" onclick="copyShare('${encodeURIComponent(shareText)}')" title="העתק">📋</button>
-          </div>
-          <div class="resp-body">
-            <div class="resp-title">${escapeHtml(title)}</div>
-            <div class="resp-list">
-              ${sections.join("")}
-              ${notRespHtml}
-              ${gIsAdmin ? `<section style="margin-top:6px;">${totalsHtml}</section>` : ''}
-            </div>
-          </div>
-        </div>
+  // "לא הגיבו"
+  let notRespHtml = '';
+  if (Array.isArray(notResponded)) {
+    if (gIsAdmin && notResponded.length) {
+      notRespHtml = `
+        <section>
+          <div class="h"><b>*לא הגיבו ❓:*</b> (${notResponded.length})</div>
+          <ul>${notResponded.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ul>
+        </section>
+      `;
+    } else {
+      notRespHtml = `
+        <section>
+          <div class="h"><b>*סה"כ לא הגיבו ❓:*</b> ${notResponded.length}</div>
+        </section>
       `;
     }
+  }
 
-    function toggleResp(id){
-      const el=document.getElementById(id); if(!el) return;
+  const wrapId = `resp_${idx}`;
+  const shareText = makeShareText(taskObj, grouped, notResponded);
+
+  return `
+    <div class="resp-wrap" id="${wrapId}">
+      <div class="resp-header">
+        <button class="btn btn-secondary resp-toggle" onclick="toggleResp('${wrapId}')">▶️ רשימה</button>
+        <button class="btn btn-icon" onclick="copyShare('${encodeURIComponent(shareText)}')" title="העתק">📋</button>
+      </div>
+      <div class="resp-body">
+        <div class="resp-title">${escapeHtml(title)}</div>
+        <div class="resp-list">
+          ${sections.join("")}
+          ${notRespHtml}
+        </div>
+      </div>
+    </div>
+  `;
+}
+    function toggleResp(id) {
+      const el = document.getElementById(id); if (!el) return;
       el.classList.toggle('resp-open');
       const btn = el.querySelector('.resp-toggle');
-      if (btn){ btn.textContent = el.classList.contains('resp-open') ? '🔽 רשימה' : '▶️ רשימה'; }
+      if (btn) { btn.textContent = el.classList.contains('resp-open') ? '🔽 רשימה' : '▶️ רשימה'; }
     }
 
-    async function copyShare(encoded){
+    async function copyShare(encoded) {
       const txt = decodeURIComponent(encoded);
-      try{
+      try {
         await navigator.clipboard.writeText(txt);
         alert('הועתק ללוח');
-      }catch(e){
-        const ta=document.createElement('textarea');
-        ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      } catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
         alert('הועתק ללוח (fallback)');
       }
     }
 
     // טעינת משימות
-    async function loadTasks(){
+    async function loadTasks() {
       const list = document.getElementById('taskList');
-      try{
+      try {
         const data = await fetchInitData();
-        const tasks     = (data.tasks||[]).sort((a,b)=>new Date(a.תאריך) - new Date(b.תאריך));
-        const responses =  data.responses || data.Responses || [];
-        const members   =  data.members   || data.Members   || [];
+        const tasks = (data.tasks || []).sort((a, b) => new Date(a.תאריך) - new Date(b.תאריך));
+        const responses = data.responses || data.Responses || [];
+        const members = data.members || data.Members || [];
 
-        if (!tasks.length){
+        if (!tasks.length) {
           list.innerHTML = '<p style="text-align:center;color:#aaa;">אין משימות זמינות</p>';
         } else {
-          list.innerHTML = tasks.map((t,i)=>{
-            const notes = t.דגשים ? `<div class="task-notes">📌 ${escapeHtml(truncate(t.דגשים,220))}</div>` : '';
+          list.innerHTML = tasks.map((t, i) => {
+            const notes = t.דגשים ? `<div class="task-notes">📌 ${escapeHtml(truncate(t.דגשים, 220))}</div>` : '';
             const { grouped, notResponded } = groupResponsesForTask(t, responses, members);
             const encTask = encodeURIComponent(t.משימה);
             const encDate = encodeURIComponent(t.תאריך);
@@ -367,7 +471,7 @@
 
             return `
               <div class="task-card">
-                <div class="task-title">${i+1}. ${escapeHtml(t.משימה)}</div>
+                <div class="task-title">${i + 1}. ${escapeHtml(t.משימה)}</div>
                 <div class="task-meta">${formatDate(t.תאריך)} • ${hebDayName(t.תאריך)} • שעה ${formatTime(t.שעה)}</div>
                 ${notes}
                 <div class="actions">
@@ -378,38 +482,38 @@
             `;
           }).join('');
         }
-      } catch(err){
+      } catch (err) {
         console.error(err);
         if (list) list.innerHTML = '<p style="color:red;text-align:center;">שגיאה בטעינת משימות</p>';
       } finally {
         const loader = document.getElementById('loader');
-        const page   = document.getElementById('page');
+        const page = document.getElementById('page');
         if (loader) loader.style.display = 'none';
-        if (page)   page.style.display   = 'block';
+        if (page) page.style.display = 'block';
         setNavPadding();
       }
     }
 
     // אתחול הרשאות + UI (ברכה, כפתור ניהול/יציאה) ואז טעינת משימות
-    async function initAuthAndUI(){
-      try{
+    async function initAuthAndUI() {
+      try {
         const me = await API.me();
-        if (me?.success){
-          gIsAdmin     = (me.role === 'admin');
+        if (me?.success) {
+          gIsAdmin = (me.role === 'admin');
           // ⬇️ נעדיף displayName שמגיע מהשרת (שם מהגיליון), אחרת ניפול ל-username
           gDisplayName = me.displayName || me.fullName || me.username || '';
         } else {
-          gIsAdmin     = API.isAdmin ? API.isAdmin() : false;
+          gIsAdmin = API.isAdmin ? API.isAdmin() : false;
           gDisplayName = (API.Auth?.displayName || API.Auth?.username || '');
         }
       } catch {
-        gIsAdmin     = API.isAdmin ? API.isAdmin() : false;
+        gIsAdmin = API.isAdmin ? API.isAdmin() : false;
         gDisplayName = (API.Auth?.displayName || API.Auth?.username || '');
       }
 
       // ברכה
       const greetEl = document.getElementById('greet');
-      if (greetEl){
+      if (greetEl) {
         greetEl.textContent = gDisplayName
           ? `ברוך הבא ${gDisplayName}${gIsAdmin ? ' – מנהל' : ''}`
           : (gIsAdmin ? 'מנהל' : '');
@@ -417,10 +521,10 @@
 
       // כפתור ניהול
       const adminBtn = document.querySelector('.bottom-nav .nav-btn[data-admin]');
-      if (adminBtn){
-        if (!gIsAdmin){
+      if (adminBtn) {
+        if (!gIsAdmin) {
           adminBtn.classList.add('is-disabled');
-          adminBtn.setAttribute('aria-disabled','true');
+          adminBtn.setAttribute('aria-disabled', 'true');
           adminBtn.disabled = true;
           adminBtn.removeAttribute('onclick');
           adminBtn.title = 'למנהלים בלבד';
@@ -428,8 +532,8 @@
           adminBtn.classList.remove('is-disabled');
           adminBtn.removeAttribute('aria-disabled');
           adminBtn.disabled = false;
-          if (!adminBtn._wired){
-            adminBtn.addEventListener('click', ()=>location.href='admin.html');
+          if (!adminBtn._wired) {
+            adminBtn.addEventListener('click', () => location.href = 'admin.html');
             adminBtn._wired = true;
           }
         }
@@ -437,12 +541,12 @@
 
       // כפתור יציאה בניווט התחתון
       const logoutBtn = document.querySelector('.bottom-nav .nav-btn[data-logout]');
-      if (logoutBtn){
+      if (logoutBtn) {
         const hasToken = !!(API?.Auth?.token || localStorage.getItem('token'));
         logoutBtn.style.display = hasToken ? 'inline-flex' : 'none';
-        if (!logoutBtn._wired){
-          logoutBtn.addEventListener('click', async ()=>{
-            try{ await API.logout(); }catch{}
+        if (!logoutBtn._wired) {
+          logoutBtn.addEventListener('click', async () => {
+            try { await API.logout(); } catch { }
             location.href = 'index.html?force=1';
           });
           logoutBtn._wired = true;
@@ -455,4 +559,5 @@
     initAuthAndUI();
   </script>
 </body>
+
 </html>
