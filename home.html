@@ -50,6 +50,29 @@
       text-overflow: ellipsis;
     }
 
+    /* מאפשר ירידת שורה בראש הדף */
+    .topbar {
+      flex-wrap: wrap;
+    }
+
+    /* מצב "שם ארוך" – הופך את הברכה לשורה מתחת לכותרת */
+    #greet.multiline {
+      position: static;
+      inset: auto;
+      transform: none;
+      flex: 1 1 100%;
+      text-align: center;
+      margin-top: 4px;
+      max-width: 100%;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      /* שבר גם בעברית */
+      text-wrap: balance;
+      /* אם נתמך - פיזור מאוזן של המילים */
+      font-size: clamp(.70rem, 2.2vw, .95rem);
+      /* מקטין מעט במסכים צרים */
+    }
+
     .container {
       padding: 15px;
       max-width: 520px;
@@ -128,6 +151,45 @@
     }
 
     /* תגובות */
+
+/* שורת כפתורי הרשימה/העתקה */
+.resp-header{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-direction: row; /* האייקון בצד שמאל, הכפתור תופס את כל השאר */
+}
+
+/* הכפתור "רשימה" נמתח לכל הרוחב הפנוי */
+.resp-header .resp-toggle{
+  flex: 1 1 auto;
+  min-width: 0;            /* מונע גלישות */
+  height: 40px;
+  border-radius: 10px;
+  font-weight: 700;
+  padding-inline: 12px;
+}
+
+/* אייקון ההעתקה בגודל קבוע בצד שמאל */
+.resp-header .btn-icon{
+  flex: 0 0 auto;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 640px){
+  .resp-header .resp-toggle { height: 42px; }
+  .resp-header .btn-icon   { width: 42px; min-width: 42px; height: 42px; }
+}
+
+
+
     .resp-wrap {
       margin-top: 10px;
       border-top: 1px solid #333;
@@ -301,102 +363,102 @@
     }
 
     // קיבוץ – תומך גם באגרגציה (ספירות) וגם בשמות לפי הרשאה
-function groupResponsesForTask(taskObj, data, opts = {}) {
-  const showNames = !!opts.showNames;
+    function groupResponsesForTask(taskObj, data, opts = {}) {
+      const showNames = !!opts.showNames;
 
-  // משימה לבדיקת התאמות
-  const tTask = String(taskObj.משימה || '').trim();
-  const tDate = normDate(taskObj.תאריך);
-  const tTime = normTime(taskObj.שעה);
+      // משימה לבדיקת התאמות
+      const tTask = String(taskObj.משימה || '').trim();
+      const tDate = normDate(taskObj.תאריך);
+      const tTime = normTime(taskObj.שעה);
 
-  // התאמה סלחנית (משימה+תאריך+שעה - השעה נבדקת רק אם קיימת בשני הצדדים)
-  const match = (ta, da, ti) => {
-    if (String(ta || '').trim() !== tTask) return false;
-    const rDate = normDate(da);
-    if (tDate && rDate && tDate !== rDate) return false;
-    const rTime = normTime(ti);
-    if (tTime && rTime && tTime !== rTime) return false;
-    return true;
-  };
+      // התאמה סלחנית (משימה+תאריך+שעה - השעה נבדקת רק אם קיימת בשני הצדדים)
+      const match = (ta, da, ti) => {
+        if (String(ta || '').trim() !== tTask) return false;
+        const rDate = normDate(da);
+        if (tDate && rDate && tDate !== rDate) return false;
+        const rTime = normTime(ti);
+        if (tTime && rTime && tTime !== rTime) return false;
+        return true;
+      };
 
-  // התאמה עוד יותר סלחנית לשמות: מתעלמים לחלוטין מהשעה (משימה+תאריך בלבד)
-  const matchNoTime = (ta, da) => {
-    if (String(ta || '').trim() !== tTask) return false;
-    const rDate = normDate(da);
-    return !(tDate && rDate && tDate !== rDate);
-  };
+      // התאמה עוד יותר סלחנית לשמות: מתעלמים לחלוטין מהשעה (משימה+תאריך בלבד)
+      const matchNoTime = (ta, da) => {
+        if (String(ta || '').trim() !== tTask) return false;
+        const rDate = normDate(da);
+        return !(tDate && rDate && tDate !== rDate);
+      };
 
-  // רשימת חברים נקייה
-  const membersRaw = data.members || data.Members || [];
-  const headerWords = new Set(['שם','שם מלא','שם פרטי','שם משפחה','משתתף','משתתפים','name','full name','member','members','firstname','lastname']);
-  const allMembers = membersRaw
-    .map(x => String(x || '').trim())
-    .filter(x => x.length > 0 && !headerWords.has((x.toLowerCase?.() || x)));
+      // רשימת חברים נקייה
+      const membersRaw = data.members || data.Members || [];
+      const headerWords = new Set(['שם', 'שם מלא', 'שם פרטי', 'שם משפחה', 'משתתף', 'משתתפים', 'name', 'full name', 'member', 'members', 'firstname', 'lastname']);
+      const allMembers = membersRaw
+        .map(x => String(x || '').trim())
+        .filter(x => x.length > 0 && !headerWords.has((x.toLowerCase?.() || x)));
 
-  // נתונים מהשרת
-  const responses   = showNames ? (data.responses || data.Responses || []) : []; // שמות - רק לאדמין
-  const countsAgg   = data.responseCounts || [];
-  const countsAggDay= data.responseCountsByDay || []; // ⬅️ חדש
+      // נתונים מהשרת
+      const responses = showNames ? (data.responses || data.Responses || []) : []; // שמות - רק לאדמין
+      const countsAgg = data.responseCounts || [];
+      const countsAggDay = data.responseCountsByDay || []; // ⬅️ חדש
 
-  const grouped   = {};   // סטטוס -> [שמות]
-  const countsOnly= {};   // סטטוס -> מספר
-  const responded = new Set();
+      const grouped = {};   // סטטוס -> [שמות]
+      const countsOnly = {};   // סטטוס -> מספר
+      const responded = new Set();
 
-  // 1) סה"כ: קודם כל, אם יש אגרגציה לפי יום – נשתמש בה (מתעלם משעה)
-  if (countsAggDay.length) {
-    countsAggDay.forEach(row => {
-      if (!matchNoTime(row["משימה"], row["תאריך"])) return;
-      const status = String(row["סטטוס"] || '').trim();
-      const c = Number(row["count"] || 0);
-      if (!status || !c) return;
-      countsOnly[status] = (countsOnly[status] || 0) + c;
-    });
-  } else {
-    // אם אין byDay, נשתמש באגרגציה הרגילה (תסלח על שעה כשצריך)
-    countsAgg.forEach(row => {
-      if (!match(row["משימה"], row["תאריך"], row["שעה"])) return;
-      const status = String(row["סטטוס"] || '').trim();
-      const c = Number(row["count"] || 0);
-      if (!status || !c) return;
-      countsOnly[status] = (countsOnly[status] || 0) + c;
-    });
-  }
+      // 1) סה"כ: קודם כל, אם יש אגרגציה לפי יום – נשתמש בה (מתעלם משעה)
+      if (countsAggDay.length) {
+        countsAggDay.forEach(row => {
+          if (!matchNoTime(row["משימה"], row["תאריך"])) return;
+          const status = String(row["סטטוס"] || '').trim();
+          const c = Number(row["count"] || 0);
+          if (!status || !c) return;
+          countsOnly[status] = (countsOnly[status] || 0) + c;
+        });
+      } else {
+        // אם אין byDay, נשתמש באגרגציה הרגילה (תסלח על שעה כשצריך)
+        countsAgg.forEach(row => {
+          if (!match(row["משימה"], row["תאריך"], row["שעה"])) return;
+          const status = String(row["סטטוס"] || '').trim();
+          const c = Number(row["count"] || 0);
+          if (!status || !c) return;
+          countsOnly[status] = (countsOnly[status] || 0) + c;
+        });
+      }
 
-  // 2) שמות לאדמין: נשתמש בהתאמה בלי שעה כדי לא לפספס
-if (responses.length) {
-  responses.forEach(r => {
-    if (!matchNoTime(r.משימה, r.תאריך)) return; // בכוונה בלי שעה
-    const status = String(r.סטטוס || r.status || '').trim();
-    const name   = String(r.שם || r.member || '').trim();
-    const note   = String(r.הערה || r.note || '').trim();
-    if (!status || !name) return;
+      // 2) שמות לאדמין: נשתמש בהתאמה בלי שעה כדי לא לפספס
+      if (responses.length) {
+        responses.forEach(r => {
+          if (!matchNoTime(r.משימה, r.תאריך)) return; // בכוונה בלי שעה
+          const status = String(r.סטטוס || r.status || '').trim();
+          const name = String(r.שם || r.member || '').trim();
+          const note = String(r.הערה || r.note || '').trim();
+          if (!status || !name) return;
 
-    responded.add(name);
-    const cleanNote = note.replace(/\s+/g, ' '); // הערה בשורה אחת
-    const label = cleanNote ? `${name} – ${cleanNote}` : name; // << מציגים את ההערה בפועל
-    (grouped[status] ||= []).push(label);
-  });
+          responded.add(name);
+          const cleanNote = note.replace(/\s+/g, ' '); // הערה בשורה אחת
+          const label = cleanNote ? `${name} – ${cleanNote}` : name; // << מציגים את ההערה בפועל
+          (grouped[status] ||= []).push(label);
+        });
 
-  // סידור לפי א״ב (על כל המחרוזת)
-  Object.keys(grouped).forEach(k =>
-    grouped[k].sort((a, b) => String(a).localeCompare(String(b), 'he'))
-  );
-}
+        // סידור לפי א״ב (על כל המחרוזת)
+        Object.keys(grouped).forEach(k =>
+          grouped[k].sort((a, b) => String(a).localeCompare(String(b), 'he'))
+        );
+      }
 
-  // 3) לא הגיבו
-  let notResponded = [];
-  if (showNames) {
-    notResponded = allMembers
-      .filter(m => !responded.has(m))
-      .sort((a, b) => String(a).localeCompare(String(b), 'he'));
-  } else {
-    const totalAnswered = Object.values(countsOnly).reduce((a, b) => a + b, 0);
-    const missing = Math.max(0, allMembers.length - totalAnswered);
-    notResponded = Array(missing).fill('');
-  }
+      // 3) לא הגיבו
+      let notResponded = [];
+      if (showNames) {
+        notResponded = allMembers
+          .filter(m => !responded.has(m))
+          .sort((a, b) => String(a).localeCompare(String(b), 'he'));
+      } else {
+        const totalAnswered = Object.values(countsOnly).reduce((a, b) => a + b, 0);
+        const missing = Math.max(0, allMembers.length - totalAnswered);
+        notResponded = Array(missing).fill('');
+      }
 
-  return { grouped, countsOnly, notResponded };
-}
+      return { grouped, countsOnly, notResponded };
+    }
 
 
 
@@ -441,43 +503,45 @@ if (responses.length) {
 
     // רנדר בלוק תגובות 
 function renderResponsesBlock(taskObj, grouped, countsOnly, idx, notResponded) {
+  const isAdmin = !!window.gIsAdmin;
+
   const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)} • ${hebDayName(taskObj.תאריך)}`;
   const keys = Array.from(new Set([
     ...Object.keys(grouped || {}),
     ...Object.keys(countsOnly || {})
   ])).sort((a, b) => String(a).localeCompare(String(b), 'he'));
 
-  const sections = []; 
+  const sections = [];
   let running = 1;
 
-  // בלוקים לכל סטטוס: אם יש שמות – רשימה ממוספרת; אם אין – רק ספירה
-  keys.forEach(key => {
-    const names = grouped[key] || [];
-    const count = countsOnly[key] || names.length || 0;
-    if (!count) return;
+  // אדמין: מציגים בלוקים עם כותרות ושמות
+  if (isAdmin) {
+    keys.forEach(key => {
+      const names = grouped[key] || [];
+      const count = countsOnly[key] || names.length || 0;
+      if (!count) return;
 
-    if (names.length) {
-      sections.push(`
-        <section>
-          <div class="h"><b>*${escapeHtml(key)}:*</b></div>
-          <ol start="${running}">${names.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ol>
-        </section>
-      `);
-      running += names.length;
-    } else {
-      sections.push(`
-        <section><div class="h"><b>*${escapeHtml(key)}:*</b> ${count}</div></section>
-      `);
-    }
-  });
+      if (names.length) {
+        sections.push(`
+          <section>
+            <div class="h"><b>*${escapeHtml(key)}:*</b></div>
+            <ol start="${running}">${names.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ol>
+          </section>
+        `);
+        running += names.length;
+      }
+    });
+  }
 
-  // לא הגיבו – אם יש שמות נציג שמות; אחרת רק מספר
+  // לא הגיבו
   const nrCount = Array.isArray(notResponded) ? notResponded.length : 0;
-  const notRespHtml = (notResponded && notResponded[0])
-    ? `<section><div class="h"><b>*לא הגיבו ❓:*</b> (${nrCount})</div><ul>${notResponded.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ul></section>`
-    : `<section><div class="h"><b>*סה"כ לא הגיבו ❓:*</b> ${nrCount}</div></section>`;
+  const notRespHtml = isAdmin
+    ? (notResponded && notResponded[0]
+        ? `<section><div class="h"><b>*לא הגיבו ❓:*</b> (${nrCount})</div><ul>${notResponded.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ul></section>`
+        : `<section><div class="h"><b>*סה"כ לא הגיבו ❓:*</b> ${nrCount}</div></section>`)
+    : ''; // לא־אדמין: לא מציגים בלוק נפרד, רק בסיכום
 
-  // 🔽 סיכומי סה"כ לכל סטטוס + לא הגיבו (תמיד מוצג, במודגש)
+  // סיכומי סה"כ (תמיד מוצג, מודגש)
   const summaryLines = [];
   keys.forEach(key => {
     const c = countsOnly[key] || (grouped[key] ? grouped[key].length : 0) || 0;
@@ -498,15 +562,15 @@ function renderResponsesBlock(taskObj, grouped, countsOnly, idx, notResponded) {
       <div class="resp-body">
         <div class="resp-title">${escapeHtml(title)}</div>
         <div class="resp-list">
-          ${sections.join("")}
-          ${notRespHtml}
-          ${summaryHtml}  <!-- ⬅️ הסיכומים בסוף -->
+          ${isAdmin ? sections.join("") : ""}   <!-- שמות רק לאדמין -->
+          ${isAdmin ? notRespHtml : ""}         <!-- "לא הגיבו" עם שמות רק לאדמין -->
+          ${summaryHtml}                         <!-- לכולם: סיכומי סה"כ בלבד -->
         </div>
       </div>
     </div>
   `;
 }
-
+ 
 
     function toggleResp(id) {
       const el = document.getElementById(id); if (!el) return;
@@ -593,6 +657,19 @@ function renderResponsesBlock(taskObj, grouped, countsOnly, idx, notResponded) {
           ? `ברוך הבא ${gDisplayName}${gIsAdmin ? ' – מנהל' : ''}`
           : (gIsAdmin ? 'מנהל' : '');
       }
+
+      // אם הברכה ארוכה מדי למקום בשורה – נעבור למצב "multiline"
+      function fitGreet() {
+        const el = document.getElementById('greet');
+        if (!el) return;
+        el.classList.remove('multiline');        // מודדים במצב רגיל
+        // אם הטקסט חורג מהרוחב – נפעיל ירידת שורה וקטנת פונט
+        if (el.scrollWidth > el.clientWidth) {
+          el.classList.add('multiline');
+        }
+      }
+      fitGreet();
+      window.addEventListener('resize', fitGreet);
 
       // כפתור ניהול
       const adminBtn = document.querySelector('.bottom-nav .nav-btn[data-admin]');
