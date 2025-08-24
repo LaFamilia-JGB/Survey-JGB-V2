@@ -340,126 +340,117 @@
     function truncate(str, max = 200) { if (!str) return ""; const s = String(str); return s.length > max ? s.slice(0, max - 1) + "…" : s; }
 
 
-    function normDate(x) {
-      // תומך Date/מספר/מחרוזת 'DD/MM/YYYY' או 'YYYY-MM-DD'
-      if (x && Object.prototype.toString.call(x) === '[object Date]' && !isNaN(x)) {
-        return new Date(x.getTime() - x.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-      }
-      if (typeof x === 'number') {
-        const d = new Date(Math.round((x - 25569) * 86400) * 1000); // תמיכה ב־Excel serial
-        if (!isNaN(d)) return d.toISOString().slice(0, 10);
-      }
-      const s = String(x || '').trim();
-      const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-      if (m) return `${m[3]}-${m[2]}-${m[1]}`;
-      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-      return s;
-    }
-    function normTime(x) {
-      const s = String(x || '').trim();
-      const m = s.match(/^(\d{1,2}):(\d{2})/);
-      if (m) return (('0' + m[1]).slice(-2)) + ':' + m[2];
-      return ''; // שעה ריקה תיחשב כריקה
-    }
+function normDate(x) {
+  if (x && Object.prototype.toString.call(x) === '[object Date]' && !isNaN(x)) {
+    return new Date(x.getTime() - x.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  }
+  if (typeof x === 'number') {
+    const d = new Date(Math.round((x - 25569) * 86400) * 1000);
+    if (!isNaN(d)) return d.toISOString().slice(0,10);
+  }
+  const s = String(x || '').trim();
+  const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  return s;
+}
+function normTime(x) {
+  const s = String(x || '').trim();
+  const m = s.match(/^(\d{1,2}):(\d{2})/);
+  if (m) return (('0'+m[1]).slice(-2)) + ':' + m[2];
+  return '';
+}
 
-    // קיבוץ – תומך גם באגרגציה (ספירות) וגם בשמות לפי הרשאה
-    function groupResponsesForTask(taskObj, data, opts = {}) {
-      const showNames = !!opts.showNames;
+// שמות יוצגו רק אם opts.showNames=true (אדמין)
+function groupResponsesForTask(taskObj, data, opts = {}) {
+  const showNames = (typeof opts.showNames === 'boolean') ? opts.showNames : !!window.gIsAdmin;
 
-      // משימה לבדיקת התאמות
-      const tTask = String(taskObj.משימה || '').trim();
-      const tDate = normDate(taskObj.תאריך);
-      const tTime = normTime(taskObj.שעה);
+  const tTask = String(taskObj.משימה || '').trim();
+  const tDate = normDate(taskObj.תאריך);
+  const tTime = normTime(taskObj.שעה);
 
-      // התאמה סלחנית (משימה+תאריך+שעה - השעה נבדקת רק אם קיימת בשני הצדדים)
-      const match = (ta, da, ti) => {
-        if (String(ta || '').trim() !== tTask) return false;
-        const rDate = normDate(da);
-        if (tDate && rDate && tDate !== rDate) return false;
-        const rTime = normTime(ti);
-        if (tTime && rTime && tTime !== rTime) return false;
-        return true;
-      };
+  // התאמה סלחנית: שעה נשקלת רק אם קיימת בשני הצדדים
+  const match = (ta, da, ti) => {
+    if (String(ta || '').trim() !== tTask) return false;
+    const rDate = normDate(da);
+    if (tDate && rDate && tDate !== rDate) return false;
+    const rTime = normTime(ti);
+    if (tTime && rTime && tTime !== rTime) return false;
+    return true;
+  };
+  // לשמות נטו: מתעלמים לגמרי מהשעה (משימה+תאריך)
+  const matchNoTime = (ta, da) => {
+    if (String(ta || '').trim() !== tTask) return false;
+    const rDate = normDate(da);
+    return !(tDate && rDate && tDate !== rDate);
+  };
 
-      // התאמה עוד יותר סלחנית לשמות: מתעלמים לחלוטין מהשעה (משימה+תאריך בלבד)
-      const matchNoTime = (ta, da) => {
-        if (String(ta || '').trim() !== tTask) return false;
-        const rDate = normDate(da);
-        return !(tDate && rDate && tDate !== rDate);
-      };
+  const membersRaw = data.members || data.Members || [];
+  const headerWords = new Set(['שם','שם מלא','שם פרטי','שם משפחה','משתתף','משתתפים','name','full name','member','members','firstname','lastname']);
+  const allMembers = membersRaw
+    .map(x => String(x || '').trim())
+    .filter(x => x.length > 0 && !headerWords.has((x.toLowerCase?.() || x)));
 
-      // רשימת חברים נקייה
-      const membersRaw = data.members || data.Members || [];
-      const headerWords = new Set(['שם', 'שם מלא', 'שם פרטי', 'שם משפחה', 'משתתף', 'משתתפים', 'name', 'full name', 'member', 'members', 'firstname', 'lastname']);
-      const allMembers = membersRaw
-        .map(x => String(x || '').trim())
-        .filter(x => x.length > 0 && !headerWords.has((x.toLowerCase?.() || x)));
+  // שמות רק לאדמין; ספירות תמיד זמינות
+  const responses      = showNames ? (data.responses || data.Responses || []) : [];
+  const countsAggDay   = data.responseCountsByDay || []; // אם הוספת בגאס (מומלץ)
+  const countsAggExact = data.responseCounts || [];
 
-      // נתונים מהשרת
-      const responses = showNames ? (data.responses || data.Responses || []) : []; // שמות - רק לאדמין
-      const countsAgg = data.responseCounts || [];
-      const countsAggDay = data.responseCountsByDay || []; // ⬅️ חדש
+  const grouped   = {};   // סטטוס -> [שמות/שמות+הערה]
+  const countsOnly= {};   // סטטוס -> כמות
+  const responded = new Set();
 
-      const grouped = {};   // סטטוס -> [שמות]
-      const countsOnly = {};   // סטטוס -> מספר
-      const responded = new Set();
+  // 1) סה"כ: עדיף לפי יום (ללא שעה), אחרת לפי התאמה הסלחנית
+  if (countsAggDay.length) {
+    countsAggDay.forEach(row => {
+      if (!matchNoTime(row["משימה"], row["תאריך"])) return;
+      const status = String(row["סטטוס"] || '').trim();
+      const c = Number(row["count"] || 0);
+      if (!status || !c) return;
+      countsOnly[status] = (countsOnly[status] || 0) + c;
+    });
+  } else {
+    countsAggExact.forEach(row => {
+      if (!match(row["משימה"], row["תאריך"], row["שעה"])) return;
+      const status = String(row["סטטוס"] || '').trim();
+      const c = Number(row["count"] || 0);
+      if (!status || !c) return;
+      countsOnly[status] = (countsOnly[status] || 0) + c;
+    });
+  }
 
-      // 1) סה"כ: קודם כל, אם יש אגרגציה לפי יום – נשתמש בה (מתעלם משעה)
-      if (countsAggDay.length) {
-        countsAggDay.forEach(row => {
-          if (!matchNoTime(row["משימה"], row["תאריך"])) return;
-          const status = String(row["סטטוס"] || '').trim();
-          const c = Number(row["count"] || 0);
-          if (!status || !c) return;
-          countsOnly[status] = (countsOnly[status] || 0) + c;
-        });
-      } else {
-        // אם אין byDay, נשתמש באגרגציה הרגילה (תסלח על שעה כשצריך)
-        countsAgg.forEach(row => {
-          if (!match(row["משימה"], row["תאריך"], row["שעה"])) return;
-          const status = String(row["סטטוס"] || '').trim();
-          const c = Number(row["count"] || 0);
-          if (!status || !c) return;
-          countsOnly[status] = (countsOnly[status] || 0) + c;
-        });
-      }
+  // 2) שמות לאדמין (כולל הערה)
+  if (showNames && responses.length) {
+    responses.forEach(r => {
+      if (!matchNoTime(r.משימה, r.תאריך)) return;
+      const status = String(r.סטטוס || r.status || '').trim();
+      const name   = String(r.שם || r.member || '').trim();
+      const note   = String(r.הערה || r.note || '').trim();
+      if (!status || !name) return;
 
-      // 2) שמות לאדמין: נשתמש בהתאמה בלי שעה כדי לא לפספס
-      if (responses.length) {
-        responses.forEach(r => {
-          if (!matchNoTime(r.משימה, r.תאריך)) return; // בכוונה בלי שעה
-          const status = String(r.סטטוס || r.status || '').trim();
-          const name = String(r.שם || r.member || '').trim();
-          const note = String(r.הערה || r.note || '').trim();
-          if (!status || !name) return;
+      responded.add(name);
+      const label = note ? `${name} – ${note.replace(/\s+/g,' ')}` : name;
+      (grouped[status] ||= []).push(label);
+    });
+    Object.keys(grouped).forEach(k =>
+      grouped[k].sort((a,b)=>String(a).localeCompare(String(b),'he'))
+    );
+  }
 
-          responded.add(name);
-          const cleanNote = note.replace(/\s+/g, ' '); // הערה בשורה אחת
-          const label = cleanNote ? `${name} – ${cleanNote}` : name; // << מציגים את ההערה בפועל
-          (grouped[status] ||= []).push(label);
-        });
+  // 3) לא הגיבו
+  let notResponded = [];
+  if (showNames) {
+    notResponded = allMembers
+      .filter(m => !responded.has(m))
+      .sort((a,b)=>String(a).localeCompare(String(b),'he'));
+  } else {
+    const totalAnswered = Object.values(countsOnly).reduce((a,b)=>a+b,0);
+    const missing = Math.max(0, allMembers.length - totalAnswered);
+    notResponded = Array(missing).fill('');
+  }
 
-        // סידור לפי א״ב (על כל המחרוזת)
-        Object.keys(grouped).forEach(k =>
-          grouped[k].sort((a, b) => String(a).localeCompare(String(b), 'he'))
-        );
-      }
-
-      // 3) לא הגיבו
-      let notResponded = [];
-      if (showNames) {
-        notResponded = allMembers
-          .filter(m => !responded.has(m))
-          .sort((a, b) => String(a).localeCompare(String(b), 'he'));
-      } else {
-        const totalAnswered = Object.values(countsOnly).reduce((a, b) => a + b, 0);
-        const missing = Math.max(0, allMembers.length - totalAnswered);
-        notResponded = Array(missing).fill('');
-      }
-
-      return { grouped, countsOnly, notResponded };
-    }
-
+  return { grouped, countsOnly, notResponded };
+}
 
 
     // טקסט לשיתוף – זהה לכולם (אם יש שמות נציג שמות; אחרת ספירה)
@@ -515,23 +506,31 @@ function renderResponsesBlock(taskObj, grouped, countsOnly, idx, notResponded) {
   let running = 1;
 
   // אדמין: מציגים בלוקים עם כותרות ושמות
-  if (isAdmin) {
-    keys.forEach(key => {
-      const names = grouped[key] || [];
-      const count = countsOnly[key] || names.length || 0;
-      if (!count) return;
+if (isAdmin) {
+  keys.forEach(key => {
+    const names = grouped[key] || [];
+    const count = countsOnly[key] || names.length || 0;
+    if (!count) return;
 
-      if (names.length) {
-        sections.push(`
-          <section>
-            <div class="h"><b>*${escapeHtml(key)}:*</b></div>
-            <ol start="${running}">${names.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ol>
-          </section>
-        `);
-        running += names.length;
-      }
-    });
-  }
+    // אם יש שמות – מציגים רשימה ממוספרת
+    if (names.length) {
+      sections.push(`
+        <section>
+          <div class="h"><b>*${escapeHtml(key)}:*</b></div>
+          <ol start="${running}">${names.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ol>
+        </section>
+      `);
+      running += names.length;
+    } else {
+      // 👈 אין שמות אבל יש count: מציגים לפחות כותרת עם הספירה
+      sections.push(`
+        <section>
+          <div class="h"><b>*${escapeHtml(key)}:*</b> (${count})</div>
+        </section>
+      `);
+    }
+  });
+}
 
   // לא הגיבו
   const nrCount = Array.isArray(notResponded) ? notResponded.length : 0;
@@ -592,10 +591,14 @@ function renderResponsesBlock(taskObj, grouped, countsOnly, idx, notResponded) {
 
     // טעינה + רנדר – משימות בסדר הפוך (האחרונה למעלה)
     async function loadTasks() {
-      const list = document.getElementById('taskList');
-      try {
-        const data = await fetchInitData();
+  const list = document.getElementById('taskList');
+  try {
+    const data = await fetchInitData();
 
+    // 👈 אם השרת החזיר role, נעדכן את הדגל לפני הקיבוץ/רנדר
+    if (data && data.role) {
+      window.gIsAdmin = (String(data.role).toLowerCase() === 'admin');
+    }
         // מציגים הפוך: האחרונה למעלה
         const tasks = (data.tasks || []).slice().reverse();
 
@@ -604,8 +607,8 @@ function renderResponsesBlock(taskObj, grouped, countsOnly, idx, notResponded) {
         } else {
           list.innerHTML = tasks.map((t, i) => {
             const notes = t.דגשים ? `<div class="task-notes">📌 ${escapeHtml(truncate(t.דגשים, 220))}</div>` : '';
-            const { grouped, countsOnly, notResponded } =
-              groupResponsesForTask(t, data, { showNames: gIsAdmin });
+            const { grouped, countsOnly, notResponded } = groupResponsesForTask(t, data, { showNames: gIsAdmin });
+
             const respBlock = renderResponsesBlock(t, grouped, countsOnly, i, notResponded);
             const encTask = encodeURIComponent(t.משימה);
             const encDate = encodeURIComponent(t.תאריך);
