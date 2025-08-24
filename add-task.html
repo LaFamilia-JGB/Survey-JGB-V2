@@ -4,11 +4,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>➕ הוספת משימה</title>
+  <title>➕ הוספת אירוע</title>
   <link rel="stylesheet" href="assets/css/styles.css" />
   <style>
     :root {
       --nav-h: 64px;
+    }
+
+    /* Loader */
+    #loader {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #121212;
+    }
+
+    .loader {
+      border: 6px solid #333;
+      border-top: 6px solid #f1c40f;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
     }
 
     label.section {
@@ -21,7 +45,25 @@
 
     .container {
       max-width: 520px;
-      padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 16px);
+      margin: auto;
+      padding: 0 14px calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 16px);
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: #1f1f1f;
+      color: #ddd;
+      font-size: 1em;
+    }
+
+    textarea {
+      min-height: 70px;
+      white-space: pre-wrap;
     }
 
     .opt-row {
@@ -82,56 +124,99 @@
       width: 45%;
       margin: 0 8px 4px;
     }
+
+    .btn {
+      background: #f1c40f;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      color: #000;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-secondary {
+      background: #2c2c2c;
+      color: #eee;
+    }
+
+    .error-box {
+      background: #3b1d1d;
+      color: #ffd7d7;
+      border: 1px solid #8a2b2b;
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    header.topbar {
+      background: #f1c40f;
+      color: #000;
+      font-weight: bold;
+      padding: 15px;
+      font-size: 1.6em;
+      text-align: center;
+      border-bottom: 2px solid #333;
+    }
   </style>
 </head>
 
 <body>
-  <header class="topbar">➕ הוספת משימה</header>
 
-  <main class="container">
-    <form id="addTaskForm">
-      <label class="section">שם המשימה:</label>
-      <input type="text" id="taskName" required>
+  <!-- Loader -->
+  <div id="loader">
+    <div class="loader"></div>
+  </div>
 
-      <label class="section">תאריך:</label>
-      <input type="date" id="taskDate" required>
+  <!-- Page -->
+  <div id="page" style="display:none;">
+    <header class="topbar">➕ הוספת אירוע</header>
 
-      <label class="section">שעה:</label>
-      <input type="time" id="taskTime" required>
+    <main class="container">
+      <form id="addTaskForm" novalidate>
+        <label class="section">שם האירוע:</label>
+        <input type="text" id="taskName" required>
 
-      <label class="section">דגשים / פרטי אירוע:</label>
-      <textarea id="taskNotes" placeholder="קוד לבוש, עלות, ציוד להביא וכו'"></textarea>
+        <label class="section">תאריך:</label>
+        <input type="date" id="taskDate" required>
 
-      <label class="section">אופציות תגובה:</label>
-      <div id="optionsContainer"></div>
+        <label class="section">שעה:</label>
+        <input type="time" id="taskTime">
 
-      <div class="row-actions">
-        <button type="button" class="btn btn-secondary" id="addOptionBtn">➕ הוסף אופציה</button>
-        <button type="button" class="btn btn-secondary" id="addGenericBtn">⚡ הוסף תשובות גנריות</button>
-      </div>
+        <label class="section">דגשים / פרטי אירוע:</label>
+        <textarea id="taskNotes" placeholder="קוד לבוש, עלות, ציוד להביא וכו'"></textarea>
 
-      <div style="margin-top:12px; text-align:center;">
-        <button type="submit" class="btn" style="width:60%">שמור משימה</button>
-      </div>
-    </form>
-  </main>
+        <label class="section">אופציות תגובה:</label>
+        <div id="optionsContainer"></div>
+
+        <div class="row-actions">
+          <button type="button" class="btn btn-secondary" id="addOptionBtn">➕ הוסף אופציה</button>
+          <button type="button" class="btn btn-secondary" id="addGenericBtn">⚡ הוסף תשובות גנריות</button>
+        </div>
+
+        <div style="margin-top:12px; text-align:center;">
+          <button type="submit" class="btn" id="saveBtn" style="width:60%">שמור אירוע</button>
+        </div>
+
+        <div id="errBox" class="error-box"></div>
+      </form>
+    </main>
+  </div>
 
   <!-- Spacer -->
   <div id="nav-spacer" aria-hidden="true"></div>
 
-  <!-- ניווט תחתון -->
-<div class="bottom-nav" id="bottomNav">
-  <button class="nav-btn" onclick="location.href='home.html'">🏠 בית</button>
-  <button class="nav-btn" data-admin>⚙️ ניהול</button>
-  <!-- איפה שיש גם יציאה -->
-  <button class="nav-btn" data-logout title="יציאה">🚪 יציאה</button>
-</div>
-
+  <!-- Bottom nav -->
+  <div class="bottom-nav" id="bottomNav">
+    <button class="nav-btn" onclick="location.href='home.html'">🏠 בית</button>
+    <button class="nav-btn" data-admin>⚙️ ניהול</button>
+    <button class="nav-btn" data-logout title="יציאה">🚪 יציאה</button>
+  </div>
 
   <script>
     function setNavPadding() {
-      const nav = document.getElementById('bottomNav');
-      if (!nav) return;
+      const nav = document.getElementById('bottomNav'); if (!nav) return;
       const h = Math.ceil(nav.getBoundingClientRect().height);
       document.documentElement.style.setProperty('--nav-h', h + 'px');
       const spacer = document.getElementById('nav-spacer');
@@ -144,30 +229,37 @@
 
   <script src="assets/js/api.js"></script>
   <script>
-    // 🔒 שומר־סף אדמין
+    // ===== Guard: רק אדמין נכנס; מציגים דף אחרי בדיקה ומסתירים loader =====
     (async function guardAdmin() {
       try {
         const hasToken = !!(API?.Auth?.token || localStorage.getItem('token'));
         if (!hasToken) { location.href = 'index.html?force=1&next=add-task'; return; }
         const me = await API.me();
         if (!me?.success || me.role !== 'admin') { location.href = 'home.html?denied=1'; return; }
+
+        // כפתור יציאה
+        const logoutBtn = document.querySelector('.bottom-nav .nav-btn[data-logout]');
+        if (logoutBtn && !logoutBtn._wired) {
+          logoutBtn.addEventListener('click', async () => {
+            try { await API.logout(); } catch { }
+            location.href = 'index.html?force=1';
+          });
+          logoutBtn._wired = true;
+        }
       } catch {
         location.href = 'home.html?err=auth';
         return;
-      }
-
-      // חיבור כפתור יציאה
-      const logoutBtn = document.querySelector('.bottom-nav .nav-btn[data-logout]');
-      if (logoutBtn && !logoutBtn._wired) {
-        logoutBtn.addEventListener('click', async () => {
-          try { await API.logout(); } catch { }
-          location.href = 'index.html?force=1';
-        });
-        logoutBtn._wired = true;
+      } finally {
+        // מציגים את העמוד ומסתירים את הטעינה
+        const loader = document.getElementById('loader');
+        const page = document.getElementById('page');
+        if (loader) loader.style.display = 'none';
+        if (page) page.style.display = 'block';
+        setNavPadding();
       }
     })();
 
-    // ===== לוגיקת אופציות =====
+    // ===== אופציות =====
     const optContainer = document.getElementById('optionsContainer');
     document.getElementById('addOptionBtn').addEventListener('click', () => addOptionRow(''));
     document.getElementById('addGenericBtn').addEventListener('click', () => {
@@ -178,7 +270,7 @@
     });
 
     function addOptionRow(text = '', requireNote = false) {
-      const esc = String(text ?? '').replace(/"/g, '&quot;');
+      const esc = (String(text ?? '')).replace(/"/g, '&quot;');
       const row = document.createElement('div'); row.className = 'opt-row';
       row.innerHTML = `
         <input type="text" class="optionText opt-input" placeholder="טקסט אופציה" value="${esc}" required>
@@ -194,12 +286,35 @@
     }
     addOptionRow();
 
-    // ===== שליחה =====
-    document.getElementById('addTaskForm').addEventListener('submit', async (e) => {
+    // ===== עוזרי נרמול =====
+    function normDate(s) {
+      if (!s) return '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      const d = new Date(s);
+      return isNaN(d) ? String(s) : d.toISOString().slice(0, 10);
+    }
+    function normTime(s) {
+      if (!s) return '';
+      if (/^\d{1,2}:\d{2}$/.test(s)) {
+        const [h, m] = s.split(':'); return String(h).padStart(2, '0') + ':' + m;
+      }
+      const d = new Date(s);
+      if (isNaN(d)) return String(s);
+      return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    }
+
+    // ===== שליחה עם טעינה =====
+    const form = document.getElementById('addTaskForm');
+    const saveBtn = document.getElementById('saveBtn');
+    const errBox = document.getElementById('errBox');
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      errBox.style.display = 'none'; errBox.textContent = '';
+
       const name = document.getElementById('taskName').value.trim();
-      const date = document.getElementById('taskDate').value;
-      const time = document.getElementById('taskTime').value;
+      const date = normDate(document.getElementById('taskDate').value);
+      const time = normTime(document.getElementById('taskTime').value);
       const notes = document.getElementById('taskNotes').value.trim();
 
       const options = Array.from(document.querySelectorAll('.opt-row')).map(row => {
@@ -208,15 +323,45 @@
         return text ? { text, requireNote: require } : null;
       }).filter(Boolean);
 
-      if (!options.length) { alert('יש להזין לפחות אופציה אחת'); return; }
+      if (!name || !date) {
+        errBox.textContent = 'שם אירוע ותאריך הם שדות חובה.';
+        errBox.style.display = 'block';
+        return;
+      }
+      if (!options.length) {
+        errBox.textContent = 'יש להזין לפחות אופציה אחת.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      // Loader בזמן שמירה + נעילת כפתור
+      const loader = document.getElementById('loader');
+      const page = document.getElementById('page');
+      saveBtn.disabled = true; saveBtn.textContent = 'שומר…';
+      if (loader) loader.style.display = 'flex';
+      if (page) page.style.display = 'none';
 
       try {
-        await API.addTask({ 'משימה': name, 'תאריך': date, 'שעה': time, 'אפשרויות': JSON.stringify(options), 'דגשים': notes });
-        alert('המשימה נוספה בהצלחה!');
+        await API.addTask({
+          'משימה': name,
+          'תאריך': date,
+          'שעה': time,
+          'אפשרויות': JSON.stringify(options),
+          'דגשים': notes
+        });
+
+        alert('האירוע נוסף בהצלחה!');
         location.href = 'admin.html';
       } catch (err) {
         console.error(err);
-        alert('הוספה נכשלה, בדוק את ה־API.');
+        const msg = (err && (err.error || err.message)) || 'הוספה נכשלה, בדוק את ה־API.';
+        errBox.textContent = msg;
+        errBox.style.display = 'block';
+      } finally {
+        // החזרת מסך במידה ונשארים בדף (במקרה של שגיאה)
+        saveBtn.disabled = false; saveBtn.textContent = 'שמור אירוע';
+        if (loader) loader.style.display = 'none';
+        if (page) page.style.display = 'block';
       }
     });
   </script>
