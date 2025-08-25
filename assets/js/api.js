@@ -48,6 +48,34 @@ const Auth = {
 function _cacheKey() { return `initDataCache_v4_role_${Auth.role || "guest"}`; }
 const CACHE_TTL_MS = 120 * 1000;
 
+(function(w){
+  const API = w.API || (w.API = {});
+  const BASE = API.BASE_URL || localStorage.getItem('apiBase') || ''; // ה־URL של ה־Apps Script
+
+  API.Auth = API.Auth || { token: localStorage.getItem('token') || '' };
+
+  API._call = function(action, body={}){
+    body.token = body.token || API.Auth.token || localStorage.getItem('token') || '';
+    return new Promise((resolve, reject)=>{
+      const cb = 'cb_' + Math.random().toString(36).slice(2);
+      w[cb] = (res)=>{ try{ resolve(res); } finally { delete w[cb]; s.remove(); } };
+      const s = document.createElement('script');
+      const q = encodeURIComponent(JSON.stringify(body));
+      s.src = `${BASE}?action=${encodeURIComponent(action)}&callback=${cb}&body=${q}&_=${Date.now()}`;
+      s.onerror = ()=>{ delete w[cb]; s.remove(); reject(new Error('API load error')); };
+      document.head.appendChild(s);
+    });
+  };
+
+  // ... שאר הפונקציות הקיימות שלך ...
+  API.listMembers   = async () => API._call('listMembers', {});
+  API.upsertMember  = async (p) => API._call('upsertMember', p||{});
+  API.deleteMember  = async (p) => API._call('deleteMember', p||{});
+
+})(window);
+
+
+
 function _readCache() {
   try {
     const raw = localStorage.getItem(_cacheKey());

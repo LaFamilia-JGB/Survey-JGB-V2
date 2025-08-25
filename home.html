@@ -453,44 +453,61 @@ function groupResponsesForTask(taskObj, data, opts = {}) {
 }
 
 
-    // טקסט לשיתוף – זהה לכולם (אם יש שמות נציג שמות; אחרת ספירה)
-    function makeShareText(taskObj, grouped, notResponded, countsOnly) {
-      const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)}`;
-      const lines = [`*${title}*`, ''];
+function makeShareText(taskObj, grouped, notResponded, countsOnly) {
+  const isAdmin = !!window.gIsAdmin;
+  const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)}`;
+  const lines = [`*${title}*`, ''];
 
-      const keys = Array.from(new Set([
-        ...Object.keys(grouped || {}),
-        ...Object.keys(countsOnly || {})
-      ])).sort((a, b) => String(a).localeCompare(String(b), 'he'));
+  const keys = Array.from(new Set([
+    ...Object.keys(grouped || {}),
+    ...Object.keys(countsOnly || {})
+  ])).sort((a, b) => String(a).localeCompare(String(b), 'he'));
 
-      if (Object.keys(grouped || {}).length) {
-        let running = 1;
-        keys.forEach(k => {
-          const arr = grouped[k] || [];
-          const cnt = countsOnly[k] || arr.length || 0;
-          if (!cnt) return;
-          if (arr.length) {
-            lines.push(`*${k}:*`);
-            arr.forEach(item => lines.push(`${running}. ${item}`));
-            running += arr.length;
-            lines.push('');
-            lines.push(`סה"כ ${k}: ${arr.length}`);
-            lines.push('');
-          } else {
-            lines.push(`*${k}:* ${cnt}`);
-          }
-        });
+  let running = 1;
+
+  if (isAdmin && Object.keys(grouped || {}).length) {
+    // אדמין: סטטוסים עם רשימות שמיות
+    keys.forEach(k => {
+      const arr = grouped[k] || [];
+      const cnt = countsOnly[k] || arr.length || 0;
+      if (!cnt) return;
+
+      if (arr.length) {
+        lines.push(`*${k}:*`);
+        arr.forEach(item => lines.push(`${running}. ${item}`));
+        running += arr.length;
+        lines.push('');
+        lines.push(`סה"כ ${k}: ${arr.length}`);
+        lines.push('');
       } else {
-        keys.forEach(k => {
-          const cnt = (countsOnly && countsOnly[k]) || 0;
-          if (cnt) lines.push(`*${k}:* ${cnt}`);
-        });
+        lines.push(`*${k}:* ${cnt}`);
       }
+    });
+  } else {
+    // יוזר רגיל: רק סיכומי ספירה
+    keys.forEach(k => {
+      const cnt = (countsOnly && countsOnly[k]) || (grouped[k]?.length || 0);
+      if (cnt) lines.push(`*${k}:* ${cnt}`);
+    });
+  }
 
-      const nrCount = Array.isArray(notResponded) ? notResponded.length : 0;
-      lines.push(`סה"כ לא הגיבו: ${nrCount}`);
-      return lines.join("\n");
-    }
+  // לא הגיבו
+  const nr = Array.isArray(notResponded) ? notResponded.filter(Boolean) : [];
+  const nrCount = Array.isArray(notResponded) ? notResponded.length : 0;
+
+  if (isAdmin && nr.length) {
+    lines.push(`*לא הגיבו ❓:*`);
+    nr.forEach(n => lines.push(`${running}. ${n}`));
+    // running += nr.length; // לא חובה להמשיך אחרי זה
+    lines.push('');
+    lines.push(`סה"כ לא הגיבו: ${nr.length}`);
+  } else {
+    lines.push(`סה"כ לא הגיבו: ${nrCount}`);
+  }
+
+  return lines.join("\n");
+}
+
 
     // רנדר בלוק תגובות 
 function renderResponsesBlock(taskObj, grouped, countsOnly, idx, notResponded) {
