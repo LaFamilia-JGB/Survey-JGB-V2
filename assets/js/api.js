@@ -21,7 +21,7 @@ function _jsonp(action, data = {}, { timeoutMs = 15000 } = {}) {
     };
 
     function cleanup() {
-      if (window[cb]) try { delete window[cb]; } catch { }
+      if (window[cb]) try { delete window[cb]; } catch {}
       if (script && script.parentNode) script.parentNode.removeChild(script);
     }
 
@@ -42,16 +42,16 @@ function _jsonp(action, data = {}, { timeoutMs = 15000 } = {}) {
 /* ======================= Auth (localStorage) ======================= */
 const Auth = {
   get token() { try { return localStorage.getItem("token") || ""; } catch { return ""; } },
-  set token(v) { try { v ? localStorage.setItem("token", v) : localStorage.removeItem("token"); } catch { } },
+  set token(v) { try { v ? localStorage.setItem("token", v) : localStorage.removeItem("token"); } catch {} },
 
   get role() { try { return localStorage.getItem("role") || "guest"; } catch { return "guest"; } },
-  set role(v) { try { v ? localStorage.setItem("role", v) : localStorage.removeItem("role"); } catch { } },
+  set role(v) { try { v ? localStorage.setItem("role", v) : localStorage.removeItem("role"); } catch {} },
 
   get username() { try { return localStorage.getItem("username") || ""; } catch { return ""; } },
-  set username(v) { try { v ? localStorage.setItem("username", v) : localStorage.removeItem("username"); } catch { } },
+  set username(v) { try { v ? localStorage.setItem("username", v) : localStorage.removeItem("username"); } catch {} },
 
   get displayName() { try { return localStorage.getItem("displayName") || ""; } catch { return ""; } },
-  set displayName(v) { try { v ? localStorage.setItem("displayName", v) : localStorage.removeItem("displayName"); } catch { } },
+  set displayName(v) { try { v ? localStorage.setItem("displayName", v) : localStorage.removeItem("displayName"); } catch {} },
 };
 
 /* ======================= קאש ======================= */
@@ -69,11 +69,11 @@ function _readInitCache() {
   } catch { return null; }
 }
 function _writeInitCache(data) {
-  try { localStorage.setItem(_initCacheKey(), JSON.stringify({ ts: Date.now(), data })); } catch { }
+  try { localStorage.setItem(_initCacheKey(), JSON.stringify({ ts: Date.now(), data })); } catch {}
 }
 function _invalidateAllInitCaches() {
   ["guest", "user", "admin"].forEach(r => {
-    try { localStorage.removeItem(`initDataCache_v1_role_${r}`); } catch { }
+    try { localStorage.removeItem(`initDataCache_v1_role_${r}`); } catch {}
   });
 }
 
@@ -96,7 +96,7 @@ function _normOptions(field) {
           ? ({ text: it, requireNote: false })
           : ({ text: String(it.text || ""), requireNote: !!it.requireNote })
       ));
-    } catch { }
+    } catch {}
   }
   const parts = s.split(",").map(x => x.trim()).filter(Boolean);
   return JSON.stringify(parts.map(p => ({ text: p, requireNote: false })));
@@ -110,6 +110,7 @@ function _call(action, body = {}, opts) {
 
 /* ======================= API Public ======================= */
 const API = (() => {
+  // --- Auth ---
   async function login(username, password) {
     const r = await _jsonp("login", { username, password });
     if (!r?.success) throw new Error(r?.error || "login failed");
@@ -137,12 +138,13 @@ const API = (() => {
 
   async function logout() {
     const t = Auth.token;
-    try { if (t) await _jsonp("logout", { token: t }); } catch { }
+    try { if (t) await _jsonp("logout", { token: t }); } catch {}
     Auth.token = ""; Auth.role = "guest"; Auth.username = ""; Auth.displayName = "";
     _invalidateAllInitCaches();
     return true;
   }
 
+  // --- Data ---
   async function getInitData({ force = false } = {}) {
     if (!force) {
       const cached = _readInitCache();
@@ -167,24 +169,85 @@ const API = (() => {
     throw new Error(resp?.error || "Failed to load init data");
   }
 
+  // --- Mutations ---
+  async function addTask(taskObjOrName, date, time, options, notes) {
+    let payload;
+    if (typeof taskObjOrName === "object") {
+      const t = taskObjOrName;
+      payload = { "משימה": t["משימה"] || "", "תאריך": t["תאריך"] || "", "שעה": t["שעה"] || "",
+                  "אפשרויות": _normOptions(t["אפשרויות"]), "דגשים": t["דגשים"] || "" };
+    } else {
+      payload = { "משימה": String(taskObjOrName || ""), "תאריך": date || "", "שעה": time || "",
+                  "אפשרויות": _normOptions(options), "דגשים": notes || "" };
+    }
+    const r = await _call("addTask", payload);
+    if (!r?.success) throw new Error(r?.error || "addTask failed");
+    _invalidateAllInitCaches();
+    return r;
+  }
+
+  async function removeTask(taskOrObj, date, time) {
+    const p = (typeof taskOrObj === "object") ? taskOrObj : { task: taskOrObj, date, time };
+    const r = await _call("removeTask", p);
+    if (!r?.success) throw new Error(r?.error || "removeTask failed");
+    _invalidateAllInitCaches();
+    return r;
+  }
+
+  async function updateTask(payload) {
+    const r = await _call("updateTask", payload);
+    if (!r?.success) throw new Error(r?.error || "updateTask failed");
+    _invalidateAllInitCaches();
+    return r;
+  }
+
+  async function editTask(payload) {
+    const r = await _call("editTask", payload);
+    if (!r?.success) throw new Error(r?.error || "editTask failed");
+    _invalidateAllInitCaches();
+    return r;
+  }
+
   async function postResponse(objOrTask, date, time, status, note = "", member = "") {
-    const p = (typeof objOrTask === "object")
-      ? objOrTask
-      : { task: objOrTask, date, time, status, note, member };
+    const p = (typeof objOrTask === "object") ? objOrTask : { task: objOrTask, date, time, status, note, member };
     const r = await _call("postResponse", p);
     if (!r?.success) throw new Error(r?.error || "postResponse failed");
     _invalidateAllInitCaches();
     return r;
   }
 
-  // ... (addTask, removeTask, updateTask, editTask, addMember, removeMember – כמו שיש לך)
+  async function addMember(nameOrObj) {
+    const p = (typeof nameOrObj === "object") ? nameOrObj : { name: nameOrObj };
+    const r = await _call("addMember", p);
+    if (!r?.success) throw new Error(r?.error || "addMember failed");
+    _invalidateAllInitCaches();
+    return r;
+  }
 
+  async function removeMember(nameOrObj) {
+    const p = (typeof nameOrObj === "object") ? nameOrObj : { name: nameOrObj };
+    const r = await _call("removeMember", p);
+    if (!r?.success) throw new Error(r?.error || "removeMember failed");
+    _invalidateAllInitCaches();
+    return r;
+  }
+
+  // --- Helpers ---
+  function isLoggedIn() { return !!Auth.token; }
+  function isAdmin()    { return (Auth.role === "admin"); }
+
+  // --- Export ---
   return {
-    login, me, logout, getInitData, postResponse,
+    login, me, logout, getInitData,
+    addTask, removeTask, updateTask, editTask,
+    postResponse,
+    addMember, removeMember,
+    isLoggedIn, isAdmin,
     Auth,
     clearInitCache: _invalidateAllInitCaches
   };
 })();
 
+/* ======================= חשיפה ל-Window ======================= */
 window.API = API;
 async function getCachedData() { return API.getInitData(); }
