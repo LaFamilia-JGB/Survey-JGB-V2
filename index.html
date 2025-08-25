@@ -14,20 +14,13 @@
     <link rel="prefetch" href="add-task.html" as="document">
     <link rel="prefetch" href="admin.html" as="document">
     <link rel="prefetch" href="home.html" as="document">
-    <link rel="prefetch" href="index.html" as="document">
     <link rel="preload" href="assets/js/api.js" as="script">
 
     <style>
-        /* ריפוד תחתון שלא יסתיר ה-nav */
-        #nav-spacer {
-            height: calc(var(--nav-h, 64px) + env(safe-area-inset-bottom, 0px));
-        }
-
         .container {
             max-width: 520px;
             margin: auto;
             padding: 15px;
-            padding-bottom: calc(var(--nav-h, 64px) + 16px);
         }
 
         .form-card {
@@ -43,12 +36,42 @@
             margin-top: 8px;
             text-align: center;
         }
-    </style>
 
+        /* ספינר */
+        #spinner {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, .5);
+            z-index: 2000;
+        }
+
+        #spinner .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #444;
+            border-top-color: #f1c40f;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
 </head>
 
 <body>
     <header class="topbar">🔐 התחברות</header>
+
+    <!-- ספינר -->
+    <div id="spinner">
+        <div class="loader"></div>
+    </div>
 
     <main class="container">
         <div class="form-card">
@@ -65,18 +88,19 @@
 
     <script src="assets/js/api.js"></script>
     <script>
-        // שמירה על גובה spacer בהתאם ל-nav
-        function setNavPadding() {
-            const nav = document.getElementById('bottomNav');
-            if (!nav) return;
-            const h = Math.ceil(nav.getBoundingClientRect().height);
-            document.documentElement.style.setProperty('--nav-h', h + 'px');
-            const spacer = document.getElementById('nav-spacer');
-            if (spacer) spacer.style.height = `calc(${h}px + env(safe-area-inset-bottom,0px))`;
+        window.addEventListener('load', () => {
+            if (window.API && typeof API.getInitData === 'function') {
+                API.getInitData().catch(() => { });
+            }
+        });
+    </script>
+    <script>
+        function showSpinner() {
+            document.getElementById("spinner").style.display = "flex";
         }
-        addEventListener('DOMContentLoaded', setNavPadding);
-        addEventListener('resize', setNavPadding);
-        addEventListener('orientationchange', setNavPadding);
+        function hideSpinner() {
+            document.getElementById("spinner").style.display = "none";
+        }
 
         // אם כבר מחוברים – הפניה אוטומטית
         (async function bootLogin() {
@@ -88,42 +112,41 @@
                 try { await API.logout(); } catch { }
             }
 
-            // אם לא ביקשו force, ונראה שיש סשן תקין – ננתב אוטומטית
             if (!force) {
                 try {
                     const me = await API.me();
                     if (me?.success) {
-                        location.href = (me.role === 'admin') ? 'home.html' : 'home.html';
+                        location.href = 'home.html';
                         return;
                     }
                 } catch { }
             }
-            // אם force – פשוט נשארים בדף התחברות כרגיל
         })();
 
-
+        // Submit התחברות
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             msg.textContent = '';
-            const btn = loginForm.querySelector('button'); btn.disabled = true;
+            const btn = loginForm.querySelector('button');
+            btn.disabled = true;
+            showSpinner();
+
             try {
                 const r = await API.login(u.value.trim(), p.value);
-                await API.getInitData({ force: true });  // מחמם קאש ל־120 שניות
+                await API.getInitData({ force: true });
                 location.href = 'home.html';
             } catch (err) {
                 msg.textContent = err?.message || 'שגיאה בהתחברות';
+                hideSpinner(); // במקרה של כישלון
             } finally {
                 btn.disabled = false;
             }
         });
-    </script>
 
-    <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').catch(() => { });
         }
     </script>
-
 </body>
 
 </html>

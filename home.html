@@ -471,21 +471,25 @@
       return { grouped, countsOnly, notResponded };
     }
 
-    function makeShareText(taskObj, grouped, notResponded, countsOnly) {
+    function makeShareText(taskObj, grouped, notResponded, countsOnly, { includeNames = false } = {}) {
       const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)}`;
       const lines = [`*${title}*`, ''];
 
+      // כל הסטטוסים שמופיעים או בקבוצות או בסיכומי ספירה
       const keys = Array.from(new Set([
         ...Object.keys(grouped || {}),
         ...Object.keys(countsOnly || {})
       ])).sort((a, b) => String(a).localeCompare(String(b), 'he'));
 
+      // נמברינג רץ לסטטוסים עם שמות (כשיש), ונשתמש בו גם עבור "לא הגיבו"
+      let running = 1;
+
       if (Object.keys(grouped || {}).length) {
-        let running = 1;
         keys.forEach(k => {
           const arr = grouped[k] || [];
           const cnt = countsOnly[k] || arr.length || 0;
           if (!cnt) return;
+
           if (arr.length) {
             lines.push(`*${k}:*`);
             arr.forEach(item => lines.push(`${running}. ${item}`));
@@ -494,20 +498,36 @@
             lines.push(`סה"כ ${k}: ${arr.length}`);
             lines.push('');
           } else {
+            // רק ספירה, ללא שמות
             lines.push(`*${k}:* ${cnt}`);
           }
         });
       } else {
+        // אין שמות (יוזר רגיל) – רק סיכומי ספירה
         keys.forEach(k => {
           const cnt = (countsOnly && countsOnly[k]) || 0;
           if (cnt) lines.push(`*${k}:* ${cnt}`);
         });
       }
 
-      const nrCount = Array.isArray(notResponded) ? notResponded.length : 0;
+      // לא הגיבו
+      const names = Array.isArray(notResponded) ? notResponded.filter(Boolean) : [];
+      const nrCount = includeNames ? names.length
+        : (Array.isArray(notResponded) ? notResponded.length : 0);
+
+      if (includeNames && names.length) {
+        lines.push('');
+        lines.push(`*לא הגיבו ❓:*`);
+        names.forEach(n => lines.push(`${running}. ${n}`));
+        running += names.length;
+      }
+
+      lines.push('');
       lines.push(`סה"כ לא הגיבו: ${nrCount}`);
+
       return lines.join("\n");
     }
+
 
     function renderResponsesBlock(taskObj, grouped, countsOnly, idx, notResponded) {
       const isAdmin = !!window.gIsAdmin;
@@ -555,7 +575,7 @@
       const summaryHtml = `<section>${summaryLines.join('')}</section>`;
 
       const wrapId = `resp_${idx}`;
-      const shareText = makeShareText(taskObj, grouped, notResponded, countsOnly);
+      const shareText = makeShareText(taskObj, grouped, notResponded, countsOnly, { includeNames: isAdmin });
 
       return `
     <div class="resp-wrap" id="${wrapId}">

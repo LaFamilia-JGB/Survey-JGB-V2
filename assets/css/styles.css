@@ -147,7 +147,13 @@ header.topbar {
   font-weight: bold !important;
 }
 #bottomNav .nav-btn:hover { background: #444 !important; }
-.nav-btn.is-disabled{ opacity:.45; pointer-events:none; filter:grayscale(.2); }
+/* כפתור ניהול נעול */
+.bottom-nav .nav-btn.is-disabled{
+  opacity: .45;
+  pointer-events: none;
+  filter: grayscale(.3);
+  cursor: not-allowed;
+}
 
 
 
