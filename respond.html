@@ -6,6 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>📝 מענה לאירוע</title>
   <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="dns-prefetch" href="https://script.google.com">
+  <link rel="preconnect" href="https://script.googleapis.com">
+  <link rel="dns-prefetch" href="https://script.googleapis.com">
+  <link rel="prefetch" href="add-task.html" as="document">
+  <link rel="prefetch" href="admin.html" as="document">
+  <link rel="prefetch" href="home.html" as="document">
+  <link rel="preload" href="assets/js/api.js" as="script">
   <style>
     :root {
       --nav-h: 64px;
@@ -149,11 +157,30 @@
         transform: rotate(360deg);
       }
     }
+
+    #busy {
+      position: fixed;
+      inset: 0;
+      display: none;
+      background: rgba(0, 0, 0, .4);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #busy .spinner {
+      width: 36px;
+      height: 36px;
+      border-width: 4px;
+    }
   </style>
 </head>
 
 <body>
   <div class="splash" id="splash">
+    <div class="spinner"></div>
+  </div>
+  <div id="busy">
     <div class="spinner"></div>
   </div>
 
@@ -176,22 +203,17 @@
     </form>
   </main>
 
-  <!-- Spacer -->
   <div id="nav-spacer" aria-hidden="true"></div>
 
-  <!-- ניווט תחתון -->
-<div class="bottom-nav" id="bottomNav">
-  <button class="nav-btn" onclick="location.href='home.html'">🏠 בית</button>
-  <button class="nav-btn" data-admin>⚙️ ניהול</button>
-  <!-- איפה שיש גם יציאה -->
-  <button class="nav-btn" data-logout title="יציאה">🚪 יציאה</button>
-</div>
-
+  <div class="bottom-nav" id="bottomNav">
+    <button class="nav-btn" onclick="location.href='home.html'">🏠 בית</button>
+    <button class="nav-btn" data-admin>⚙️ ניהול</button>
+    <button class="nav-btn" data-logout title="יציאה">🚪 יציאה</button>
+  </div>
 
   <script>
     function setNavPadding() {
-      const nav = document.getElementById('bottomNav');
-      if (!nav) return;
+      const nav = document.getElementById('bottomNav'); if (!nav) return;
       const h = Math.ceil(nav.getBoundingClientRect().height);
       document.documentElement.style.setProperty('--nav-h', h + 'px');
       const spacer = document.getElementById('nav-spacer');
@@ -204,11 +226,9 @@
 
   <script src="assets/js/api.js"></script>
   <script>
-    // כפתור יציאה (אם מחובר)
     (function wireLogout() {
       const btn = document.querySelector('.bottom-nav .nav-btn[data-logout]');
       if (!btn || btn._wired) return;
-      // מציגים רק אם יש טוקן
       const hasToken = !!(API?.Auth?.token || localStorage.getItem('token'));
       btn.style.display = hasToken ? 'inline-flex' : 'none';
       btn.addEventListener('click', async () => {
@@ -222,10 +242,11 @@
     function formatTime(v) { const t = new Date(v); if (!isNaN(t)) return t.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }); if (/^\d{1,2}:\d{2}$/.test(v)) return v; return v; }
     function hebDayName(v) { const d = new Date(v); const days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']; return isNaN(d) ? '' : days[d.getDay()]; }
     const escAttr = s => String(s).replace(/"/g, '&quot;');
+    const showBusy = on => { const el = document.getElementById('busy'); if (el) el.style.display = on ? 'flex' : 'none'; };
 
     async function initRespondPage() {
       try {
-        const data = await (API?.getInitData?.() || window.getCachedData?.() || {});
+        const data = await (API?.getInitData?.() || {});
         const q = new URLSearchParams(location.search);
         const task = decodeURIComponent(q.get('task') || '');
         const date = decodeURIComponent(q.get('date') || '');
@@ -240,22 +261,19 @@
           tn.style.display = 'block'; tn.textContent = '📌 ' + taskData.דגשים;
         }
 
-        // טוען שמות חברים
         const memberSelect = document.getElementById('memberSelect');
         (data.members || []).forEach(m => {
           const opt = document.createElement('option');
           opt.value = m; opt.textContent = m; memberSelect.appendChild(opt);
         });
 
-        // מייצר אופציות רדיו
         let options = []; try { options = taskData?.אפשרויות ? JSON.parse(taskData.אפשרויות) : []; } catch { }
         const radioContainer = document.getElementById('radioContainer');
         radioContainer.innerHTML = options.map(opt => `
           <label>
             <input type="radio" name="status" value="${escAttr(opt.text)}" data-require="${opt.requireNote ? 'true' : 'false'}">
             <span>${opt.text}</span>
-          </label>
-        `).join('');
+          </label>`).join('');
 
         const noteInput = document.getElementById('note');
         radioContainer.addEventListener('change', () => {
@@ -273,12 +291,19 @@
           if (!statusEl) { alert('בחר סטטוס'); return; }
           if (statusEl.dataset.require === 'true' && !note) { noteInput.reportValidity(); return; }
 
-          const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.textContent = 'שולח...';
+          const btn = document.getElementById('submitBtn');
+          btn.disabled = true; btn.textContent = 'שולח...'; showBusy(true);
           try {
             await API.postResponse(task, date, time, statusEl.value, note, member);
-            alert('התשובה נשמרה'); location.href = 'home.html';
-          } catch (err) { console.error(err); alert('שליחה נכשלה, נסה שוב.'); }
-          finally { btn.disabled = false; btn.textContent = 'שלח תגובה'; }
+            // מנקה ומחמם קאש טרי בבת אחת
+            await API.getInitData({ force: true });
+            // מעבר מהיר בלי back-alert כפול
+            location.replace('home.html?fresh=1');
+          } catch (err) {
+            console.error(err); alert('שליחה נכשלה, נסה שוב.');
+          } finally {
+            btn.disabled = false; btn.textContent = 'שלח תגובה'; showBusy(false);
+          }
         });
 
       } finally {
@@ -288,6 +313,12 @@
       }
     }
     initRespondPage();
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => { });
+    }
   </script>
 </body>
 

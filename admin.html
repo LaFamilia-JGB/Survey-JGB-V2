@@ -4,7 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>⚙️ ניהול</title>
-  <link rel="stylesheet" href="assets/css/styles.css" />
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link rel="preconnect" href="https://script.google.com">
+    <link rel="dns-prefetch" href="https://script.google.com">
+    <link rel="preconnect" href="https://script.googleapis.com">
+    <link rel="dns-prefetch" href="https://script.googleapis.com">
+    <link rel="prefetch" href="respond.html" as="document">
+    <link rel="prefetch" href="add-task.html" as="document">
+    <link rel="prefetch" href="admin.html" as="document">
+    <link rel="prefetch" href="home.html" as="document">
+    <link rel="prefetch" href="index.html" as="document">
+    <link rel="preload" href="assets/js/api.js" as="script">
+
   <style>
     :root{ --nav-h:64px; }
     html,body,button,input,select,textarea{ font-family: Calibri,"Segoe UI",Arial,sans-serif !important; }
@@ -127,8 +138,8 @@
     /* ===== Data ===== */
     let gData = { tasks:[], responses:[], members:[], responseCounts:[], responseCountsByDay:[] };
 
-    async function loadAll(force=true){
-      const data = await (API?.getInitData?.({force}) || {});
+    async function loadAll(force = false){
+       const data = await (API?.getInitData?.({ force }) || {});
       gData.tasks = data.tasks || [];
       gData.responses = data.responses || data.Responses || [];
       gData.members = data.members || data.Members || [];
@@ -303,7 +314,9 @@ function makeShareText(taskObj, grouped, notResponded, countsOnly) {
         pill.querySelector('.pill-del').addEventListener('click', async()=>{
           if(!confirm('למחוק את \"'+name+'\"?')) return;
           showBusy(true);
-          try{ await API.removeMember({name}); await loadAll(true); renderMembers(); }
+          try{ await API.removeMember({name}); await loadAll(true); renderMembers(); API._clearInitCache();
+ }
+          
           catch(e){ console.error(e); alert('מחיקה נכשלה'); }
           finally{ showBusy(false); }
         });
@@ -371,7 +384,8 @@ function makeShareText(taskObj, grouped, notResponded, countsOnly) {
           try{
             const p1={ task:String(oldTask).trim(), date:_normDateForServer(oldDate), time:_normTimeForServer(oldTime) };
             try{ await API.removeTask(p1); }
-            catch(e1){ await API.removeTask({ task:p1.task, date:p1.date }); }
+            catch(e1){ await API.removeTask({ task:p1.task, date:p1.date });API._clearInitCache();
+ }
             await refreshAndRender();
           }catch(e){ console.error('removeTask failed', e); alert('מחיקה נכשלה. בדוק שהמשימה/תאריך/שעה תואמים לגיליון.'); }
           finally{ showBusy(false); }
@@ -387,8 +401,10 @@ function makeShareText(taskObj, grouped, notResponded, countsOnly) {
           const payload = { oldTask, oldDate, oldTime, options, newTask, newDate, newTime, notes: newNotes };
           showBusy(true);
           try{
-            if(typeof API.updateTask === 'function'){ await API.updateTask(payload); }
-            else if(typeof API.editTask === 'function'){ await API.editTask(payload); }
+            if(typeof API.updateTask === 'function'){ await API.updateTask(payload);API._clearInitCache();
+ }
+            else if(typeof API.editTask === 'function'){ await API.editTask(payload);API._clearInitCache();
+ }
             else { // fallback
               await API.removeTask({ task: oldTask, date: oldDate, time: oldTime });
               await API.addTask({ 'משימה': newTask, 'תאריך': newDate, 'שעה': newTime, 'אפשרויות': options, 'דגשים': newNotes });
@@ -425,7 +441,8 @@ function makeShareText(taskObj, grouped, notResponded, countsOnly) {
         const inp = document.getElementById('newMemberName'); const name = inp.value.trim();
         if(!name) return inp.reportValidity();
         showBusy(true);
-        try{ await API.addMember({ name }); inp.value=''; await refreshAndRender(); }
+        try{ await API.addMember({ name }); inp.value=''; await refreshAndRender();API._clearInitCache();
+ }
         catch(e){ console.error(e); alert('הוספה נכשלה'); }
         finally{ showBusy(false); }
       });
@@ -472,5 +489,11 @@ function makeShareText(taskObj, grouped, notResponded, countsOnly) {
       }
     })();
   </script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  }
+</script>
+
 </body>
 </html>
