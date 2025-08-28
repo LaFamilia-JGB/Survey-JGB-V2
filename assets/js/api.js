@@ -13,7 +13,6 @@ function _jsonp(action, data = {}, { timeoutMs = 15000 } = {}) {
     let timer;
     const script = document.createElement("script");
 
-    // הפונקציה שהשרת יקרא
     window[cb] = (payload) => {
       clearTimeout(timer);
       resolve(payload);
@@ -21,7 +20,7 @@ function _jsonp(action, data = {}, { timeoutMs = 15000 } = {}) {
     };
 
     function cleanup() {
-      if (window[cb]) try { delete window[cb]; } catch {}
+      try { delete window[cb]; } catch {}
       if (script && script.parentNode) script.parentNode.removeChild(script);
     }
 
@@ -41,21 +40,21 @@ function _jsonp(action, data = {}, { timeoutMs = 15000 } = {}) {
 
 /* ======================= Auth (localStorage) ======================= */
 const Auth = {
-  get token() { try { return localStorage.getItem("token") || ""; } catch { return ""; } },
-  set token(v) { try { v ? localStorage.setItem("token", v) : localStorage.removeItem("token"); } catch {} },
+  get token()      { try { return localStorage.getItem("token") || ""; } catch { return ""; } },
+  set token(v)     { try { v ? localStorage.setItem("token", v) : localStorage.removeItem("token"); } catch {} },
 
-  get role() { try { return localStorage.getItem("role") || "guest"; } catch { return "guest"; } },
-  set role(v) { try { v ? localStorage.setItem("role", v) : localStorage.removeItem("role"); } catch {} },
+  get role()       { try { return localStorage.getItem("role") || "guest"; } catch { return "guest"; } },
+  set role(v)      { try { v ? localStorage.setItem("role", v) : localStorage.removeItem("role"); } catch {} },
 
-  get username() { try { return localStorage.getItem("username") || ""; } catch { return ""; } },
-  set username(v) { try { v ? localStorage.setItem("username", v) : localStorage.removeItem("username"); } catch {} },
+  get username()   { try { return localStorage.getItem("username") || ""; } catch { return ""; } },
+  set username(v)  { try { v ? localStorage.setItem("username", v) : localStorage.removeItem("username"); } catch {} },
 
-  get displayName() { try { return localStorage.getItem("displayName") || ""; } catch { return ""; } },
-  set displayName(v) { try { v ? localStorage.setItem("displayName", v) : localStorage.removeItem("displayName"); } catch {} },
+  get displayName(){ try { return localStorage.getItem("displayName") || ""; } catch { return ""; } },
+  set displayName(v){try { v ? localStorage.setItem("displayName", v) : localStorage.removeItem("displayName"); } catch {} },
 };
 
 /* ======================= קאש ======================= */
-const INITCACHE_TTL_MS = 120 * 1000; // 120 שניות
+const INITCACHE_TTL_MS = 120 * 1000;
 function _initCacheKey() { return `initDataCache_v1_role_${Auth.role || "guest"}`; }
 
 function _readInitCache() {
@@ -126,9 +125,9 @@ const API = (() => {
     if (!Auth.token) return { success: false, error: "no token" };
     const r = await _jsonp("me", { token: Auth.token });
     if (r?.success) {
-      Auth.role = r.role || "guest";
-      Auth.username = r.username || "";
-      Auth.displayName = r.displayName || "";
+      Auth.role = r.role || Auth.role || "guest";
+      Auth.username = r.username || Auth.username || "";
+      Auth.displayName = r.displayName || r.fullName || Auth.displayName || "";
     } else {
       Auth.token = ""; Auth.role = "guest"; Auth.username = ""; Auth.displayName = "";
       _invalidateAllInitCaches();
@@ -152,9 +151,10 @@ const API = (() => {
     }
     const resp = await _call("getInitData", {});
     if (resp && !resp.error) {
-      if (resp.role) Auth.role = resp.role;
-      if (resp.username) Auth.username = resp.username;
-      if (resp.displayName) Auth.displayName = resp.displayName;
+      if (resp.role)       Auth.role = resp.role;
+      if (resp.username)   Auth.username = resp.username;
+      if (resp.displayName)Auth.displayName = resp.displayName;
+
       if (Array.isArray(resp.tasks)) {
         resp.tasks = resp.tasks.map(t => ({
           ...t,
@@ -169,7 +169,7 @@ const API = (() => {
     throw new Error(resp?.error || "Failed to load init data");
   }
 
-  // --- Mutations ---
+  // --- Mutations (מנקים קאש על הצלחה) ---
   async function addTask(taskObjOrName, date, time, options, notes) {
     let payload;
     if (typeof taskObjOrName === "object") {
@@ -189,7 +189,10 @@ const API = (() => {
   async function removeTask(taskOrObj, date, time) {
     const p = (typeof taskOrObj === "object") ? taskOrObj : { task: taskOrObj, date, time };
     const r = await _call("removeTask", p);
-    if (!r?.success) throw new Error(r?.error || "removeTask failed");
+    if (!r?.success) {
+      if (r?.debug) console.warn("removeTask debug:", r.debug);
+      throw new Error(r?.error || "removeTask failed");
+    }
     _invalidateAllInitCaches();
     return r;
   }
@@ -236,18 +239,22 @@ const API = (() => {
   function isLoggedIn() { return !!Auth.token; }
   function isAdmin()    { return (Auth.role === "admin"); }
 
-  // --- Export ---
   return {
-    login, me, logout, getInitData,
-    addTask, removeTask, updateTask, editTask,
-    postResponse,
+    // Auth
+    login, me, logout,
+    // Data
+    getInitData,
+    // Mutations
+    addTask, removeTask, updateTask, editTask, postResponse,
     addMember, removeMember,
+    // Helpers
     isLoggedIn, isAdmin,
     Auth,
+    // קאש
     clearInitCache: _invalidateAllInitCaches
   };
 })();
 
-/* ======================= חשיפה ל-Window ======================= */
+/* ======================= חשיפה ל־window + תאימות ======================= */
 window.API = API;
 async function getCachedData() { return API.getInitData(); }

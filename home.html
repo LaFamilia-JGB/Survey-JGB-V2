@@ -319,17 +319,19 @@
     addEventListener('orientationchange', setNavPadding);
   </script>
 
-  <script src="assets/js/api.js"></script>
+  <script src="assets/js/api.js?v=9"></script>
+
+
+
 
   <!-- ✳️ הוק קטן – אם באנו מ-respond או סומן invalidate, נכריח force וננקה קאש -->
   <script>
     (function () {
       const q = new URLSearchParams(location.search);
       const needRefresh = q.get('refresh') === '1' || !!localStorage.getItem('initData:invalidate');
-      if (needRefresh && window.API?.clearCache) {
-        try { API.clearCache(); } catch { }
-      }
-      if (needRefresh) {
+      if (needRefresh && window.API?.clearInitCache) {
+        try { API.clearInitCache(); } catch { }
+      } if (needRefresh) {
         window.__forceInit = true;
         localStorage.removeItem('initData:invalidate');
       }
@@ -420,7 +422,16 @@
       const responded = new Set();
 
       // סה"כ לפי יום אם יש, אחרת לפי התאמה מלאה
-      if (countsAggDay.length) {
+      // סה"כ (עדיפות לשעה אם קיימת)
+      if (tTime && countsAggExact.length) {
+        countsAggExact.forEach(row => {
+          if (!match(row["משימה"], row["תאריך"], row["שעה"])) return;
+          const status = String(row["סטטוס"] || '').trim();
+          const c = Number(row["count"] || 0);
+          if (!status || !c) return;
+          countsOnly[status] = (countsOnly[status] || 0) + c;
+        });
+      } else if (countsAggDay.length) {
         countsAggDay.forEach(row => {
           if (!matchNoTime(row["משימה"], row["תאריך"])) return;
           const status = String(row["סטטוס"] || '').trim();
@@ -441,7 +452,8 @@
       // שמות לאדמין (כולל הערה)
       if (showNames && responses.length) {
         responses.forEach(r => {
-          if (!matchNoTime(r.משימה, r.תאריך)) return;
+          const ok = tTime ? match(r.משימה, r.תאריך, r.שעה) : matchNoTime(r.משימה, r.תאריך);
+          if (!ok) return;
           const status = String(r.סטטוס || r.status || '').trim();
           const name = String(r.שם || r.member || '').trim();
           const note = String(r.הערה || r.note || '').trim();
@@ -451,9 +463,6 @@
           const label = note ? `${name} – ${note.replace(/\s+/g, ' ')}` : name;
           (grouped[status] ||= []).push(label);
         });
-        Object.keys(grouped).forEach(k =>
-          grouped[k].sort((a, b) => String(a).localeCompare(String(b), 'he'))
-        );
       }
 
       // לא הגיבו
@@ -472,7 +481,7 @@
     }
 
     function makeShareText(taskObj, grouped, notResponded, countsOnly, { includeNames = false } = {}) {
-      const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)}`;
+      const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)} • ${hebDayName(taskObj.תאריך)}`;
       const lines = [`*${title}*`, ''];
 
       // כל הסטטוסים שמופיעים או בקבוצות או בסיכומי ספירה
@@ -481,7 +490,7 @@
         ...Object.keys(countsOnly || {})
       ])).sort((a, b) => String(a).localeCompare(String(b), 'he'));
 
-      // נמברינג רץ לסטטוסים עם שמות (כשיש), ונשתמש בו גם עבור "לא הגיבו"
+      // מונה רץ לשמות (כולל "לא הגיבו")
       let running = 1;
 
       if (Object.keys(grouped || {}).length) {
@@ -492,10 +501,10 @@
 
           if (arr.length) {
             lines.push(`*${k}:*`);
-            arr.forEach(item => lines.push(`${running}. ${item}`));
-            running += arr.length;
-            lines.push('');
-            lines.push(`סה"כ ${k}: ${arr.length}`);
+            arr.forEach(item => {
+              lines.push(`${running}. ${item}`);
+              running++;
+            });
             lines.push('');
           } else {
             // רק ספירה, ללא שמות
@@ -518,17 +527,23 @@
       if (includeNames && names.length) {
         lines.push('');
         lines.push(`*לא הגיבו ❓:*`);
-        names.forEach(n => lines.push(`${running}. ${n}`));
-        running += names.length;
+        names.forEach(n => {
+          lines.push(`${running}. ${n}`);
+          running++;
+        });
+        lines.push('');
       }
 
-      lines.push('');
-      lines.push(`סה"כ לא הגיבו: ${nrCount}`);
+      // סיכום מרוכז בסוף בלבד
+      lines.push('*סיכום:*');
+      keys.forEach(k => {
+        const total = countsOnly[k] || (grouped[k]?.length || 0);
+        if (total) lines.push(`- סה"כ ${k}: ${total}`);
+      });
+      lines.push(`- סה"כ לא הגיבו: ${nrCount}`);
 
       return lines.join("\n");
     }
-
-
     function renderResponsesBlock(taskObj, grouped, countsOnly, idx, notResponded) {
       const isAdmin = !!window.gIsAdmin;
 
@@ -560,11 +575,13 @@
       }
 
       const nrCount = Array.isArray(notResponded) ? notResponded.length : 0;
-      const notRespHtml = isAdmin
-        ? (notResponded && notResponded[0]
-          ? `<section><div class="h"><b>*לא הגיבו ❓:*</b> (${nrCount})</div><ul>${notResponded.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ul></section>`
-          : `<section><div class="h"><b>*סה"כ לא הגיבו ❓:*</b> ${nrCount}</div></section>`)
-        : '';
+      let notRespHtml = isAdmin ? `<section><div class="h"><b>*סה"כ לא הגיבו ❓:*</b> ${nrCount}</div></section>` : '';
+      if (isAdmin && Array.isArray(notResponded) && notResponded.length) {
+        notRespHtml =
+          `<section><div class="h"><b>*לא הגיבו ❓:*</b> (${nrCount})</div>` +
+          `<ol start="${running}">${notResponded.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ol></section>`;
+        running += nrCount;
+      }
 
       const summaryLines = [];
       keys.forEach(key => {

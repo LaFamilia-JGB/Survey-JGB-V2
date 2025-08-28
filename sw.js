@@ -1,73 +1,66 @@
-/* ⚡ sw.optimized.js — precache + SWR + special caching for Apps Script JSONP */
-const VERSION = "v7-2025-08-25";
-const PRECACHE_URLS = [
-  "/", "/index.html", "/home.html", "/respond.html", "/admin.html", "/add-task.html",
-  "/assets/css/styles.css", "/assets/js/api.js"
+const STATIC = 'static-v4';
+const API = 'api-v1';
+
+// לא נחסום את api.js בקאש כדי שתמיד יגיע עדכני
+const ASSETS = [
+  '/', '/index.html',
+  '/home.html', '/admin.html', '/respond.html', '/add-task.html',
+  '/assets/css/styles.css', '/favicon.ico'
 ];
-const RUNTIME = "runtime-" + VERSION;
-const INIT = "init-" + VERSION;
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(RUNTIME).then((cache) => cache.addAll(PRECACHE_URLS.map(u => new Request(u, { cache: "reload" }))))
-      .then(() => self.skipWaiting())
-  );
+self.addEventListener('install', e => {
+  e.waitUntil((async () => {
+    const cache = await caches.open(STATIC);
+    await Promise.allSettled(
+      ASSETS.map(path => fetch(path).then(r => r.ok && cache.put(path, r.clone()))
+                        .catch(()=>{}))
+    );
+    self.skipWaiting();
+  })());
 });
 
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter(k => ![RUNTIME, INIT].includes(k)).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
+self.addEventListener('activate', e => {
+  e.waitUntil((async () => {
+    // מחיקת גרסאות ישנות
+    const keys = await caches.keys();
+    await Promise.all(keys.map(k => (k !== STATIC && k !== API) ? caches.delete(k) : null));
+    await self.clients.claim();
+  })());
 });
 
-self.addEventListener("fetch", (event) => {
-  const req = event.request;
-  if (req.method !== "GET") return;
-  const url = new URL(req.url);
+self.addEventListener('fetch', e => {
+  const url = new URL(e.request.url);
 
-  // Apps Script JSONP — action=getInitData -> stale-while-revalidate, no-store on network
-  if (url.host === "script.google.com" && url.pathname.includes("/macros/") && url.search.includes("action=getInitData")) {
-    event.respondWith(staleWhileRevalidateJSONP(req));
+  // JSONP ל־Apps Script: SWR
+  if (url.pathname.includes('/macros/s/')) {
+    e.respondWith((async () => {
+      const cache = await caches.open(API);
+      const cached = await cache.match(e.request);
+      try {
+        const fresh = await fetch(e.request);
+        cache.put(e.request, fresh.clone());
+        return fresh;
+      } catch (_) {
+        return cached || Response.error();
+      }
+    })());
     return;
   }
 
-  // HTML documents — SWR for instant nav back/forward
-  const accept = req.headers.get("accept") || "";
-  if (req.destination === "document" || accept.includes("text/html")) {
-    event.respondWith(staleWhileRevalidate(req));
+  // ל־api.js – תמיד רשת תחילה (כדי לקבל עדכונים מיידית)
+  if (url.pathname.endsWith('/assets/js/api.js')) {
+    e.respondWith((async () => {
+      try {
+        const fresh = await fetch(e.request, { cache: 'no-store' });
+        return fresh;
+      } catch {
+        const cache = await caches.open(STATIC);
+        return (await cache.match('/assets/js/api.js')) || fetch(e.request);
+      }
+    })());
     return;
   }
 
-  // Static assets — cache first
-  if (["style", "script", "font", "image"].includes(req.destination)) {
-    event.respondWith(cacheFirst(req));
-    return;
-  }
-
-  // default SWR
-  event.respondWith(staleWhileRevalidate(req));
+  // שאר הסטטיים – cache-first
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
 });
-
-async function cacheFirst(req) {
-  const c = await caches.open(RUNTIME);
-  const hit = await c.match(req, { ignoreVary: true });
-  if (hit) return hit;
-  const res = await fetch(req);
-  c.put(req, res.clone());
-  return res;
-}
-
-async function staleWhileRevalidate(req) {
-  const c = await caches.open(RUNTIME);
-  const cached = await c.match(req, { ignoreVary: true });
-  const net = fetch(req).then((res) => { c.put(req, res.clone()); return res; }).catch(() => null);
-  return cached || net || fetch(req);
-}
-
-async function staleWhileRevalidateJSONP(req) {
-  const c = await caches.open(INIT);
-  const cached = await c.match(req, { ignoreVary: true });
-  const net = fetch(req, { cache: "no-store" }).then((res) => { c.put(req, res.clone()); return res; }).catch(() => null);
-  return cached || net || fetch(req);
-}

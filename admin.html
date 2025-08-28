@@ -1,74 +1,355 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>⚙️ ניהול</title>
-    <link rel="stylesheet" href="assets/css/styles.css" />
-    <link rel="preconnect" href="https://script.google.com">
-    <link rel="dns-prefetch" href="https://script.google.com">
-    <link rel="preconnect" href="https://script.googleapis.com">
-    <link rel="dns-prefetch" href="https://script.googleapis.com">
-    <link rel="prefetch" href="respond.html" as="document">
-    <link rel="prefetch" href="add-task.html" as="document">
-    <link rel="prefetch" href="admin.html" as="document">
-    <link rel="prefetch" href="home.html" as="document">
-    <link rel="prefetch" href="index.html" as="document">
-    <link rel="preload" href="assets/js/api.js" as="script">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="dns-prefetch" href="https://script.google.com">
+  <link rel="preconnect" href="https://script.googleapis.com">
+  <link rel="dns-prefetch" href="https://script.googleapis.com">
+  <link rel="prefetch" href="respond.html" as="document">
+  <link rel="prefetch" href="add-task.html" as="document">
+  <link rel="prefetch" href="admin.html" as="document">
+  <link rel="prefetch" href="home.html" as="document">
+  <link rel="prefetch" href="index.html" as="document">
+  <link rel="preload" href="assets/js/api.js" as="script">
 
   <style>
-    :root{ --nav-h:64px; }
-    html,body,button,input,select,textarea{ font-family: Calibri,"Segoe UI",Arial,sans-serif !important; }
-    body{ background:#121212; color:#ddd; margin:0; }
-    header.topbar{ background:#f1c40f; color:#000; font-weight:800; padding:14px; font-size:1.6em; text-align:center; border-bottom:2px solid #333; }
-    .container{ max-width:560px; margin:auto; padding:12px 14px calc(var(--nav-h) + 20px); text-align:right; }
-    .tabs{ display:flex; justify-content:center; gap:10px; margin:12px 0; flex-wrap:wrap; }
-    .tab-btn{ background:#2c2c2c; color:#eee; border:none; padding:12px 18px; border-radius:12px; cursor:pointer; font-weight:800; min-width:160px; font-size:1.05em; }
-    .tab-btn.active{ background:#f1c40f; color:#000; }
-    .tab-panel{ display:none; }
-    .tab-panel.active{ display:block; }
-    .panel-header{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
-    .panel-title{ color:#f1c40f; font-weight:800; font-size:1.1em; }
-    .btn{ background:#f1c40f; border:none; padding:10px 16px; border-radius:10px; color:#000; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:8px; }
-    .btn-secondary{ background:#2c2c2c; color:#eee; }
-    .btn[disabled]{ opacity:.6; cursor:default; }
-    .btn-icon{ padding:6px 9px; line-height:1; font-size:.95em; border-radius:8px; background:#333; color:#fff; min-width:auto; }
-    .task-card{ background:#1f1f1f; border-radius:12px; padding:14px; margin-bottom:14px; box-shadow:0 2px 6px rgba(0,0,0,.35); border:1px solid #2b2b2b; }
-    .task-title{ font-size:1.15em; font-weight:700; margin-bottom:6px; color:#f1c40f; display:flex; align-items:center; justify-content:space-between; gap:8px; }
-    .title-actions{ display:flex; gap:6px; align-items:center; }
-    .task-meta{ font-size:1em; color:#ddd; margin-bottom:8px; }
-    .task-notes{ margin-top:6px; color:#f1c40f; background:rgba(241,196,15,.08); border:1px dashed rgba(241,196,15,.35); padding:6px 8px; border-radius:6px; white-space:pre-wrap; }
-    .actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; align-items:center; }
-    .edit-area{ margin-top:8px; }
-    .edit-row{ display:grid; grid-template-columns: 1fr; gap:8px; margin-top:4px; }
-    .edit-row input,.edit-row textarea{ width:100%; box-sizing:border-box; padding:10px; border-radius:8px; border:1px solid #333; background:#1f1f1f; color:#ddd; font-size:1em; }
-    .edit-row textarea{ min-height:70px; }
-    input[type="date"]::-webkit-calendar-picker-indicator, input[type="time"]::-webkit-calendar-picker-indicator{ filter: invert(1); }
-    .resp-wrap{ margin-top:10px; border-top:1px solid #333; padding-top:10px; }
-    .resp-header{ display:grid; grid-template-columns: 1fr auto; column-gap:8px; align-items:center; width:100%; }
-    .resp-header .resp-toggle{ width:100%; }
-    .resp-header .btn-icon{ width:auto; }
-    .resp-body{ display:none; background:#151515; border:1px solid #2a2a2a; border-radius:10px; padding:10px; margin-top:8px; }
-    .resp-open .resp-body{ display:block; }
-    .resp-title{ color:#f1c40f; font-weight:700; margin:0 0 6px; }
-    .resp-list{ font-size:.9em; line-height:1.3; }
-    .resp-list ol{ margin:2px 0 6px; padding-left:20px; }
-    .resp-list li{ margin-bottom:2px; }
-    #loader{ display:flex; justify-content:center; align-items:center; height:100vh; background:#121212; }
-    .loader{ border:6px solid #333; border-top:6px solid #f1c40f; border-radius:50%; width:50px; height:50px; animation:spin .7s linear infinite; }
-    @keyframes spin{ to{ transform: rotate(360deg);} }
-    .nav-btn.is-disabled{ opacity:.45; pointer-events:none; filter:grayscale(.2); }
+    :root {
+      --nav-h: 64px;
+    }
+
+    html,
+    body,
+    button,
+    input,
+    select,
+    textarea {
+      font-family: Calibri, "Segoe UI", Arial, sans-serif !important;
+    }
+
+    body {
+      background: #121212;
+      color: #ddd;
+      margin: 0;
+    }
+
+    header.topbar {
+      background: #f1c40f;
+      color: #000;
+      font-weight: 800;
+      padding: 14px;
+      font-size: 1.6em;
+      text-align: center;
+      border-bottom: 2px solid #333;
+    }
+
+    .container {
+      max-width: 560px;
+      margin: auto;
+      padding: 12px 14px calc(var(--nav-h) + 20px);
+      text-align: right;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 12px 0;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      background: #2c2c2c;
+      color: #eee;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 800;
+      min-width: 160px;
+      font-size: 1.05em;
+    }
+
+    .tab-btn.active {
+      background: #f1c40f;
+      color: #000;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .panel-title {
+      color: #f1c40f;
+      font-weight: 800;
+      font-size: 1.1em;
+    }
+
+    .btn {
+      background: #f1c40f;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      color: #000;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-secondary {
+      background: #2c2c2c;
+      color: #eee;
+    }
+
+    .btn[disabled] {
+      opacity: .6;
+      cursor: default;
+    }
+
+    .btn-icon {
+      padding: 6px 9px;
+      line-height: 1;
+      font-size: .95em;
+      border-radius: 8px;
+      background: #333;
+      color: #fff;
+      min-width: auto;
+    }
+
+    .task-card {
+      background: #1f1f1f;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .35);
+      border: 1px solid #2b2b2b;
+    }
+
+    .task-title {
+      font-size: 1.15em;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #f1c40f;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .title-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .task-meta {
+      font-size: 1em;
+      color: #ddd;
+      margin-bottom: 8px;
+    }
+
+    .task-notes {
+      margin-top: 6px;
+      color: #f1c40f;
+      background: rgba(241, 196, 15, .08);
+      border: 1px dashed rgba(241, 196, 15, .35);
+      padding: 6px 8px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      align-items: center;
+    }
+
+    .edit-area {
+      margin-top: 8px;
+    }
+
+    .edit-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .edit-row input,
+    .edit-row textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: #1f1f1f;
+      color: #ddd;
+      font-size: 1em;
+    }
+
+    .edit-row textarea {
+      min-height: 70px;
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+    }
+
+    .resp-wrap {
+      margin-top: 10px;
+      border-top: 1px solid #333;
+      padding-top: 10px;
+    }
+
+    .resp-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      column-gap: 8px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .resp-header .resp-toggle {
+      width: 100%;
+    }
+
+    .resp-header .btn-icon {
+      width: auto;
+    }
+
+    .resp-body {
+      display: none;
+      background: #151515;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 8px;
+    }
+
+    .resp-open .resp-body {
+      display: block;
+    }
+
+    .resp-title {
+      color: #f1c40f;
+      font-weight: 700;
+      margin: 0 0 6px;
+    }
+
+    .resp-list {
+      font-size: .9em;
+      line-height: 1.3;
+    }
+
+    .resp-list ol {
+      margin: 2px 0 6px;
+      padding-left: 20px;
+    }
+
+    .resp-list li {
+      margin-bottom: 2px;
+    }
+
+    #loader {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #121212;
+    }
+
+    .loader {
+      border: 6px solid #333;
+      border-top: 6px solid #f1c40f;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .nav-btn.is-disabled {
+      opacity: .45;
+      pointer-events: none;
+      filter: grayscale(.2);
+    }
+
     /* lightweight overlay for actions */
-    #busy{ position:fixed; inset:0; display:none; background:rgba(0,0,0,.35); align-items:center; justify-content:center; z-index:50; }
-    #busy .loader{ width:42px; height:42px; border-width:5px; }
+    #busy {
+      position: fixed;
+      inset: 0;
+      display: none;
+      background: rgba(0, 0, 0, .35);
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    #busy .loader {
+      width: 42px;
+      height: 42px;
+      border-width: 5px;
+    }
+
     /* Members pills */
-    .pill{ display:inline-flex; align-items:center; gap:8px; background:#1f1f1f; border:1px solid #2b2b2b; color:#ddd; border-radius:999px; padding:6px 10px; margin:4px; }
-    .pill .pill-del{ appearance:none; border:none; background:#2c2c2c; color:#eee; border-radius:999px; padding:4px 8px; cursor:pointer; font-size:.95em; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #1f1f1f;
+      border: 1px solid #2b2b2b;
+      color: #ddd;
+      border-radius: 999px;
+      padding: 6px 10px;
+      margin: 4px;
+    }
+
+    .pill .pill-del {
+      appearance: none;
+      border: none;
+      background: #2c2c2c;
+      color: #eee;
+      border-radius: 999px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: .95em;
+    }
   </style>
 </head>
+
 <body>
-  <div id="loader"><div class="loader"></div></div>
-  <div id="busy"><div class="loader"></div></div>
+  <div id="loader">
+    <div class="loader"></div>
+  </div>
+  <div id="busy">
+    <div class="loader"></div>
+  </div>
 
   <div id="page" style="display:none;">
     <header class="topbar">⚙️ ניהול</header>
@@ -87,9 +368,12 @@
       </section>
 
       <section id="tab-members" class="tab-panel">
-        <div class="panel-header"><div class="panel-title">ניהול משתתפים</div></div>
+        <div class="panel-header">
+          <div class="panel-title">ניהול משתתפים</div>
+        </div>
         <div style="background:#1f1f1f;border:1px solid #2b2b2b;border-radius:12px;padding:12px;">
-          <div class="add-member-row" style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+          <div class="add-member-row"
+            style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
             <input id="newMemberName" type="text" placeholder="שם חדש"
               style="flex:1;padding:10px;border-radius:8px;border:1px solid #333;background:#1f1f1f;color:#ddd;box-sizing:border-box;min-width:220px;">
             <button class="btn btn-secondary" id="addMemberBtn">➕ הוסף</button>
@@ -112,8 +396,8 @@
     window.gIsAdmin = false;
     window.gDisplayName = '';
 
-    function setNavPadding(){
-      const nav = document.getElementById('bottomNav'); if(!nav) return;
+    function setNavPadding() {
+      const nav = document.getElementById('bottomNav'); if (!nav) return;
       const h = Math.ceil(nav.getBoundingClientRect().height);
       document.documentElement.style.setProperty('--nav-h', h + 'px');
       const spacer = document.getElementById('nav-spacer');
@@ -123,23 +407,23 @@
     addEventListener('resize', setNavPadding);
     addEventListener('orientationchange', setNavPadding);
   </script>
-  <script src="assets/js/api.js"></script>
+  <script src="assets/js/api.js?v=9"></script>
   <script>
     /* ===== Utils ===== */
-    const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\\"/g,'&quot;').replace(/'/g,'&#039;');
-    function formatDate(v){ const d=new Date(v); return isNaN(d)? v : d.toLocaleDateString('he-IL',{year:'numeric',month:'2-digit',day:'2-digit'}); }
-    function formatTime(v){ const t=new Date(v); if(!isNaN(t)) return t.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}); if(/^\d{1,2}:\d{2}$/.test(v)) return v; return v||''; }
-    function hebDayName(v){ const d=new Date(v); const days=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת']; return isNaN(d)? '' : days[d.getDay()]; }
-    function toDateInputValue(s){ if(!s)return''; const d=new Date(s); if(!isNaN(d)) return d.toISOString().slice(0,10); if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; const m=String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m? `${m[3]}-${m[2]}-${m[1]}`: s; }
-    function toTimeInputValue(s){ if(!s)return''; if(/^\d{1,2}:\d{2}$/.test(s)) { const [h,m]=s.split(':'); return String(h).padStart(2,'0')+':'+m; } const d=new Date(s); if(!isNaN(d)){ const hh=String(d.getHours()).padStart(2,'0'); const mm=String(d.getMinutes()).padStart(2,'0'); return `${hh}:${mm}`;} return s; }
-    function normDate(x){ if(x&&Object.prototype.toString.call(x)==='[object Date]'&&!isNaN(x)) return new Date(x.getTime()-x.getTimezoneOffset()*60000).toISOString().slice(0,10); const s=String(x||'').trim(); const m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); if(m) return `${m[3]}-${m[2]}-${m[1]}`; if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; return s; }
-    function normTime(x){ const s=String(x||'').trim(); const m=s.match(/^(\d{1,2}):(\d{2})/); if(m) return (('0'+m[1]).slice(-2))+':'+m[2]; return ''; }
+    const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\\"/g, '&quot;').replace(/'/g, '&#039;');
+    function formatDate(v) { const d = new Date(v); return isNaN(d) ? v : d.toLocaleDateString('he-IL', { year: 'numeric', month: '2-digit', day: '2-digit' }); }
+    function formatTime(v) { const t = new Date(v); if (!isNaN(t)) return t.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }); if (/^\d{1,2}:\d{2}$/.test(v)) return v; return v || ''; }
+    function hebDayName(v) { const d = new Date(v); const days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']; return isNaN(d) ? '' : days[d.getDay()]; }
+    function toDateInputValue(s) { if (!s) return ''; const d = new Date(s); if (!isNaN(d)) return d.toISOString().slice(0, 10); if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; const m = String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m ? `${m[3]}-${m[2]}-${m[1]}` : s; }
+    function toTimeInputValue(s) { if (!s) return ''; if (/^\d{1,2}:\d{2}$/.test(s)) { const [h, m] = s.split(':'); return String(h).padStart(2, '0') + ':' + m; } const d = new Date(s); if (!isNaN(d)) { const hh = String(d.getHours()).padStart(2, '0'); const mm = String(d.getMinutes()).padStart(2, '0'); return `${hh}:${mm}`; } return s; }
+    function normDate(x) { if (x && Object.prototype.toString.call(x) === '[object Date]' && !isNaN(x)) return new Date(x.getTime() - x.getTimezoneOffset() * 60000).toISOString().slice(0, 10); const s = String(x || '').trim(); const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); if (m) return `${m[3]}-${m[2]}-${m[1]}`; if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; return s; }
+    function normTime(x) { const s = String(x || '').trim(); const m = s.match(/^(\d{1,2}):(\d{2})/); if (m) return (('0' + m[1]).slice(-2)) + ':' + m[2]; return ''; }
 
     /* ===== Data ===== */
-    let gData = { tasks:[], responses:[], members:[], responseCounts:[], responseCountsByDay:[] };
+    let gData = { tasks: [], responses: [], members: [], responseCounts: [], responseCountsByDay: [] };
 
-    async function loadAll(force = false){
-       const data = await (API?.getInitData?.({ force }) || {});
+    async function loadAll(force = false) {
+      const data = await (API?.getInitData?.({ force }) || {});
       gData.tasks = data.tasks || [];
       gData.responses = data.responses || data.Responses || [];
       gData.members = data.members || data.Members || [];
@@ -149,66 +433,75 @@
     }
 
     /* ===== Grouping (admin shows names) ===== */
-    function groupResponsesForTask(taskObj, data){
-      const tTask = String(taskObj.משימה||'').trim();
+    function groupResponsesForTask(taskObj, data) {
+      const tTask = String(taskObj.משימה || '').trim();
       const tDate = normDate(taskObj.תאריך);
       const tTime = normTime(taskObj.שעה);
 
-      const match = (ta,da,ti)=>{
-        if(String(ta||'').trim()!==tTask) return false;
-        const rd=normDate(da); if(tDate && rd && tDate!==rd) return false;
-        const rt=normTime(ti); if(tTime && rt && tTime!==rt) return false;
+      const match = (ta, da, ti) => {
+        if (String(ta || '').trim() !== tTask) return false;
+        const rd = normDate(da); if (tDate && rd && tDate !== rd) return false;
+        const rt = normTime(ti); if (tTime && rt && tTime !== rt) return false;
         return true;
       };
-      const matchNoTime = (ta,da)=>{
-        if(String(ta||'').trim()!==tTask) return false;
-        const rd=normDate(da); return !(tDate && rd && tDate!==rd);
+      const matchNoTime = (ta, da) => {
+        if (String(ta || '').trim() !== tTask) return false;
+        const rd = normDate(da); return !(tDate && rd && tDate !== rd);
       };
 
       const membersRaw = data.members || [];
-      const headerWords = new Set(['שם','שם מלא','שם פרטי','שם משפחה','משתתף','משתתפים','name','full name','member','members','firstname','lastname']);
-      const allMembers = membersRaw.map(x=>String(x||'').trim()).filter(x=>x && !headerWords.has((x.toLowerCase?.()||x)));
+      const headerWords = new Set(['שם', 'שם מלא', 'שם פרטי', 'שם משפחה', 'משתתף', 'משתתפים', 'name', 'full name', 'member', 'members', 'firstname', 'lastname']);
+      const allMembers = membersRaw.map(x => String(x || '').trim()).filter(x => x && !headerWords.has((x.toLowerCase?.() || x)));
 
       const responses = data.responses || [];
       const countsAggDay = data.responseCountsByDay || [];
       const countsAggExact = data.responseCounts || [];
 
-      const grouped = {}; const countsOnly={}; const responded=new Set();
+      const grouped = {}; const countsOnly = {}; const responded = new Set();
 
-      // counts
-      if(countsAggDay.length){
-        countsAggDay.forEach(row=>{
-          if(!matchNoTime(row['משימה'], row['תאריך'])) return;
-          const status=String(row['סטטוס']||'').trim(); const c=Number(row['count']||0);
-          if(!status||!c) return; countsOnly[status]=(countsOnly[status]||0)+c;
+      // counts (עדיפות לשעה אם קיימת)
+      if (tTime && countsAggExact.length) {
+        countsAggExact.forEach(row => {
+          if (!match(row['משימה'], row['תאריך'], row['שעה'])) return;
+          const status = String(row['סטטוס'] || '').trim(); const c = Number(row['count'] || 0);
+          if (!status || !c) return; countsOnly[status] = (countsOnly[status] || 0) + c;
         });
-      }else{
-        countsAggExact.forEach(row=>{
-          if(!match(row['משימה'], row['תאריך'], row['שעה'])) return;
-          const status=String(row['סטטוס']||'').trim(); const c=Number(row['count']||0);
-          if(!status||!c) return; countsOnly[status]=(countsOnly[status]||0)+c;
+      } else if (countsAggDay.length) {
+        countsAggDay.forEach(row => {
+          if (!matchNoTime(row['משימה'], row['תאריך'])) return;
+          const status = String(row['סטטוס'] || '').trim(); const c = Number(row['count'] || 0);
+          if (!status || !c) return; countsOnly[status] = (countsOnly[status] || 0) + c;
+        });
+      } else {
+        countsAggExact.forEach(row => {
+          if (!match(row['משימה'], row['תאריך'], row['שעה'])) return;
+          const status = String(row['סטטוס'] || '').trim(); const c = Number(row['count'] || 0);
+          if (!status || !c) return; countsOnly[status] = (countsOnly[status] || 0) + c;
         });
       }
 
-      // names
-      (responses||[]).forEach(r=>{
-        if(!matchNoTime(r.משימה, r.תאריך)) return;
-        const status=String(r.סטטוס||r.status||'').trim();
-        const name=String(r.שם||r.member||'').trim();
-        const note=String(r.הערה||r.note||'').trim();
-        if(!status||!name) return;
-        responded.add(name);
-        (grouped[status] ||= []).push(note ? `${name} – ${note.replace(/\s+/g,' ')}` : name);
-      });
-      Object.keys(grouped).forEach(k=>grouped[k].sort((a,b)=>String(a).localeCompare(String(b),'he')));
 
-      let notResponded = allMembers.filter(m=>!responded.has(m)).sort((a,b)=>String(a).localeCompare(String(b),'he'));
+      // names
+      (responses || []).forEach(r => {
+        const ok = tTime ? match(r.משימה, r.תאריך, r.שעה) : matchNoTime(r.משימה, r.תאריך);
+        if (!ok) return;
+        const status = String(r.סטטוס || r.status || '').trim();
+        const name = String(r.שם || r.member || '').trim();
+        const note = String(r.הערה || r.note || '').trim();
+        if (!status || !name) return;
+        responded.add(name);
+        (grouped[status] ||= []).push(note ? `${name} – ${note.replace(/\s+/g, ' ')}` : name);
+      });
+
+      Object.keys(grouped).forEach(k => grouped[k].sort((a, b) => String(a).localeCompare(String(b), 'he')));
+
+      let notResponded = allMembers.filter(m => !responded.has(m)).sort((a, b) => String(a).localeCompare(String(b), 'he'));
 
       return { grouped, countsOnly, notResponded };
     }
 
 function makeShareText(taskObj, grouped, notResponded, countsOnly) {
-  const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)}`;
+  const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)} • ${hebDayName(taskObj.תאריך)}`;
   const lines = [`*${title}*`, ''];
 
   const keys = Array.from(new Set([
@@ -225,12 +518,13 @@ function makeShareText(taskObj, grouped, notResponded, countsOnly) {
 
     if (arr.length) {
       lines.push(`*${k}:*`);
-      arr.forEach(item => lines.push(`${running}. ${item}`));
-      running += arr.length;
-      lines.push('');
-      lines.push(`סה"כ ${k}: ${arr.length}`);
+      arr.forEach(item => {
+        lines.push(`${running}. ${item}`);
+        running++;
+      });
       lines.push('');
     } else {
+      // רק ספירה, ללא שמות
       lines.push(`*${k}:* ${cnt}`);
     }
   });
@@ -239,44 +533,66 @@ function makeShareText(taskObj, grouped, notResponded, countsOnly) {
   const nr = Array.isArray(notResponded) ? notResponded.filter(Boolean) : [];
   if (nr.length) {
     lines.push(`*לא הגיבו ❓:*`);
-    nr.forEach(n => lines.push(`${running}. ${n}`));
-    running += nr.length;
+    nr.forEach(n => {
+      lines.push(`${running}. ${n}`);
+      running++;
+    });
     lines.push('');
-    lines.push(`סה"כ לא הגיבו: ${nr.length}`);
-  } else {
-    const nrCount = Array.isArray(notResponded) ? notResponded.length : 0;
-    lines.push(`סה"כ לא הגיבו: ${nrCount}`);
   }
+
+  // סיכום מרוכז בסוף בלבד
+  lines.push('*סיכום:*');
+  keys.forEach(k => {
+    const total = countsOnly[k] || (grouped[k]?.length || 0);
+    if (total) lines.push(`- סה"כ ${k}: ${total}`);
+  });
+  lines.push(`- סה"כ לא הגיבו: ${nr.length}`);
 
   return lines.join("\n");
 }
 
 
-    function renderResponsesBlock(taskObj, grouped, countsOnly, idx, notResponded){
-      const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)} • ${hebDayName(taskObj.תאריך)}`;
-      const keys = Array.from(new Set([...Object.keys(grouped||{}), ...Object.keys(countsOnly||{})]))
-        .sort((a,b)=>String(a).localeCompare(String(b),'he'));
-      const sections=[]; let running=1;
-      keys.forEach(k=>{
-        const names = grouped[k]||[]; const count = countsOnly[k] || names.length || 0; if(!count) return;
-        if(names.length){
-          sections.push(`<section><div class="h"><b>*${esc(k)}:*</b></div><ol start="${running}">${names.map(n=>`<li>${esc(n)}</li>`).join('')}</ol></section>`);
-          running += names.length;
+
+      function renderResponsesBlock(taskObj, grouped, countsOnly, idx, notResponded) {
+        const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)} • ${hebDayName(taskObj.תאריך)}`;
+        const keys = Array.from(new Set([...Object.keys(grouped || {}), ...Object.keys(countsOnly || {})]))
+          .sort((a, b) => String(a).localeCompare(String(b), 'he'));
+        const sections = []; let running = 1;
+        keys.forEach(k => {
+          const names = grouped[k] || []; const count = countsOnly[k] || names.length || 0; if (!count) return;
+          if (names.length) {
+            sections.push(`<section><div class="h"><b>*${esc(k)}:*</b></div><ol start="${running}">${names.map(n => `<li>${esc(n)}</li>`).join('')}</ol></section>`);
+            running += names.length;
+          }
+        });
+        const nrCount = Array.isArray(notResponded) ? notResponded.length : 0;
+        let notRespHtml = '';
+        if (nrCount) {
+          notRespHtml =
+            `<section>
+       <div class="h"><b>*לא הגיבו ❓:*</b></div>
+       <ol start="${running}">${notResponded.map(n => `<li>${esc(n)}</li>`).join('')}</ol>
+     </section>`;
+          running += nrCount;
         }
-      });
-      const nrCount = notResponded?.length || 0;
-      const notRespHtml = notResponded?.length
-        ? `<section><div class="h"><b>*לא הגיבו ❓:*</b> (${nrCount})</div><ul>${notResponded.map(n=>`<li>${esc(n)}</li>`).join('')}</ul></section>`
-        : `<section><div class="h"><b>*סה"כ לא הגיבו ❓:*</b> ${nrCount}</div></section>`;
+        // בלי "סה״כ" כאן – הסיכומים רק בסוף (summaryHtml)
 
-      const summaryLines=[];
-      keys.forEach(k=>{ const c = countsOnly[k] || (grouped[k]? grouped[k].length:0) || 0; if(c) summaryLines.push(`<div class="h"><b>*סה"כ ${esc(k)}:*</b> ${c}</div>`); });
-      summaryLines.push(`<div class="h"><b>*סה"כ לא הגיבו:*</b> ${nrCount}</div>`);
-      const summaryHtml = `<section>${summaryLines.join('')}</section>`;
 
-      const wrapId = `resp_${idx}`;
-      const shareText = makeShareText(taskObj, grouped, notResponded, countsOnly);
-      return `
+        if (Array.isArray(notResponded) && notResponded.length) {
+          notRespHtml =
+            `<section><div class="h"><b>*לא הגיבו ❓:*</b> (${nrCount})</div>` +
+            `<ol start="${running}">${notResponded.map(n => `<li>${esc(n)}</li>`).join('')}</ol></section>`;
+          running += nrCount;
+        }
+
+        const summaryLines = [];
+        keys.forEach(k => { const c = countsOnly[k] || (grouped[k] ? grouped[k].length : 0) || 0; if (c) summaryLines.push(`<div class="h"><b>*סה"כ ${esc(k)}:*</b> ${c}</div>`); });
+        summaryLines.push(`<div class="h"><b>*סה"כ לא הגיבו:*</b> ${nrCount}</div>`);
+        const summaryHtml = summaryLines.join('');
+
+        const wrapId = `resp_${idx}`;
+        const shareText = makeShareText(taskObj, grouped, notResponded, countsOnly);
+        return `
         <div class="resp-wrap" id="${wrapId}">
           <div class="resp-header">
             <button class="btn btn-secondary resp-toggle" onclick="toggleResp('${wrapId}')">▶️ רשימה</button>
@@ -291,55 +607,56 @@ function makeShareText(taskObj, grouped, notResponded, countsOnly) {
             </div>
           </div>
         </div>`;
-    }
+      }
 
-    function toggleResp(id){
-      const el=document.getElementById(id); if(!el) return;
-      el.classList.toggle('resp-open');
-      const btn=el.querySelector('.resp-toggle');
-      if(btn) btn.textContent = el.classList.contains('resp-open') ? '🔽 רשימה' : '▶️ רשימה';
-    }
-    async function copyShare(encoded){
-      const txt = decodeURIComponent(encoded);
-      try{ await navigator.clipboard.writeText(txt); alert('הועתק ללוח'); }
-      catch{ const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); alert('הועתק ללוח (fallback)'); }
-    }
+      function toggleResp(id) {
+        const el = document.getElementById(id); if (!el) return;
+        el.classList.toggle('resp-open');
+        const btn = el.querySelector('.resp-toggle');
+        if (btn) btn.textContent = el.classList.contains('resp-open') ? '🔽 רשימה' : '▶️ רשימה';
+      }
+      async function copyShare(encoded) {
+        const txt = decodeURIComponent(encoded);
+        try { await navigator.clipboard.writeText(txt); alert('הועתק ללוח'); }
+        catch { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); alert('הועתק ללוח (fallback)'); }
+      }
 
-    /* ===== Render ===== */
-    function renderMembers(){
-      const host=document.getElementById('membersList'); host.innerHTML='';
-      (gData.members||[]).forEach(name=>{
-        const pill=document.createElement('span'); pill.className='pill';
-        pill.innerHTML = `<span>${esc(name)}</span><button class="pill-del" title="מחק">🗑️</button>`;
-        pill.querySelector('.pill-del').addEventListener('click', async()=>{
-          if(!confirm('למחוק את \"'+name+'\"?')) return;
-          showBusy(true);
-          try{ await API.removeMember({name}); await loadAll(true); renderMembers(); API._clearInitCache();
- }
-          
-          catch(e){ console.error(e); alert('מחיקה נכשלה'); }
-          finally{ showBusy(false); }
+      /* ===== Render ===== */
+      function renderMembers() {
+        const host = document.getElementById('membersList'); host.innerHTML = '';
+        (gData.members || []).forEach(name => {
+          const pill = document.createElement('span'); pill.className = 'pill';
+          pill.innerHTML = `<span>${esc(name)}</span><button class="pill-del" title="מחק">🗑️</button>`;
+          pill.querySelector('.pill-del').addEventListener('click', async () => {
+            if (!confirm('למחוק את \"' + name + '\"?')) return;
+            showBusy(true);
+            try {
+              await API.removeMember({ name }); await loadAll(true); renderMembers(); API.clearInitCache();
+            }
+
+            catch (e) { console.error(e); alert('מחיקה נכשלה'); }
+            finally { showBusy(false); }
+          });
+          host.appendChild(pill);
         });
-        host.appendChild(pill);
-      });
-    }
+      }
 
-    function renderTasks(){
-      const host = document.getElementById('tasksList');
-      const tasks = [...(gData.tasks||[])].sort((a,b)=> new Date(a.תאריך) - new Date(b.תאריך));
-      if(!tasks.length){ host.innerHTML = '<p style="color:#aaa;">אין משימות</p>'; return; }
+      function renderTasks() {
+        const host = document.getElementById('tasksList');
+        const tasks = [...(gData.tasks || [])].sort((a, b) => new Date(a.תאריך) - new Date(b.תאריך));
+        if (!tasks.length) { host.innerHTML = '<p style="color:#aaa;">אין משימות</p>'; return; }
 
-      host.innerHTML = tasks.map((t,i)=>{
-        const {grouped, countsOnly, notResponded} = groupResponsesForTask(t, gData);
-        const resp = renderResponsesBlock(t, grouped, countsOnly, i, notResponded);
-        const meta = `${formatDate(t.תאריך)} • ${hebDayName(t.תאריך)} • שעה ${formatTime(t.שעה)}`;
-        const notes = t.דגשים ? `<div class="task-notes">📌 ${esc(t.דגשים)}</div>` : '';
-        const dateVal = toDateInputValue(t.תאריך);
-        const timeVal = toTimeInputValue(t.שעה);
-        return `
-          <div class="task-card" data-task="${esc(t.משימה)}" data-date="${esc(dateVal)}" data-time="${esc(timeVal)}" data-options='${esc(t.אפשרויות||"[]")}'>
+        host.innerHTML = tasks.map((t, i) => {
+          const { grouped, countsOnly, notResponded } = groupResponsesForTask(t, gData);
+          const resp = renderResponsesBlock(t, grouped, countsOnly, i, notResponded);
+          const meta = `${formatDate(t.תאריך)} • ${hebDayName(t.תאריך)} • שעה ${formatTime(t.שעה)}`;
+          const notes = t.דגשים ? `<div class="task-notes">📌 ${esc(t.דגשים)}</div>` : '';
+          const dateVal = toDateInputValue(t.תאריך);
+          const timeVal = toTimeInputValue(t.שעה);
+          return `
+          <div class="task-card" data-task="${esc(t.משימה)}" data-date="${esc(dateVal)}" data-time="${esc(timeVal)}" data-options='${esc(t.אפשרויות || "[]")}'>
             <div class="task-title">
-              <span>${i+1}. ${esc(t.משימה)}</span>
+              <span>${i + 1}. ${esc(t.משימה)}</span>
               <div class="title-actions">
                 <button class="btn-icon btn-edit" title="ערוך">✏️</button>
                 <button class="btn-icon trash" title="מחק">🗑️</button>
@@ -352,7 +669,7 @@ function makeShareText(taskObj, grouped, notResponded, countsOnly) {
                 <input type="text" class="inp-name" value="${esc(t.משימה)}" placeholder="שם המשימה">
                 <input type="date" class="inp-date" value="${esc(dateVal)}">
                 <input type="time" class="inp-time" value="${esc(timeVal)}">
-                <textarea class="inp-notes" placeholder="דגשים / פרטי אירוע">${esc(t.דגשים||"")}</textarea>
+                <textarea class="inp-notes" placeholder="דגשים / פרטי אירוע">${esc(t.דגשים || "")}</textarea>
               </div>
               <div class="actions">
                 <button class="btn btn-secondary btn-cancel">בטל</button>
@@ -361,139 +678,144 @@ function makeShareText(taskObj, grouped, notResponded, countsOnly) {
             </div>
             ${resp}
           </div>`;
-      }).join("");
+        }).join("");
 
-      // wire events
-      host.querySelectorAll('.task-card').forEach(card=>{
-        const oldTask = card.dataset.task;
-        const oldDate = card.dataset.date;
-        const oldTime = card.dataset.time;
-        const options = card.dataset.options || "[]";
-        const editBtn = card.querySelector('.btn-edit');
-        const editArea= card.querySelector('.edit-area');
-        editBtn.addEventListener('click', ()=>{ editArea.style.display='block'; });
-        card.querySelector('.btn-cancel').addEventListener('click', ()=>{ editArea.style.display='none'; });
+        // wire events
+        host.querySelectorAll('.task-card').forEach(card => {
+          const oldTask = card.dataset.task;
+          const oldDate = card.dataset.date;
+          const oldTime = card.dataset.time;
+          const options = card.dataset.options || "[]";
+          const editBtn = card.querySelector('.btn-edit');
+          const editArea = card.querySelector('.edit-area');
+          editBtn.addEventListener('click', () => { editArea.style.display = 'block'; });
+          card.querySelector('.btn-cancel').addEventListener('click', () => { editArea.style.display = 'none'; });
 
-        function _normDateForServer(s){ if(!s) return ''; if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; const d=new Date(s); if(!isNaN(d)) return d.toISOString().slice(0,10); const m=String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m? `${m[3]}-${m[2]}-${m[1]}` : String(s); }
-        function _normTimeForServer(s){ if(!s) return ''; if(/^\d{1,2}:\d{2}$/.test(s)){ const [h,m]=s.split(':'); return String(h).padStart(2,'0')+':'+m; } const d=new Date(s); if(!isNaN(d)){ const hh=String(d.getHours()).padStart(2,'0'); const mm=String(d.getMinutes()).padStart(2,'0'); return `${hh}:${mm}`;} return String(s); }
+          function _normDateForServer(s) { if (!s) return ''; if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; const d = new Date(s); if (!isNaN(d)) return d.toISOString().slice(0, 10); const m = String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m ? `${m[3]}-${m[2]}-${m[1]}` : String(s); }
+          function _normTimeForServer(s) { if (!s) return ''; if (/^\d{1,2}:\d{2}$/.test(s)) { const [h, m] = s.split(':'); return String(h).padStart(2, '0') + ':' + m; } const d = new Date(s); if (!isNaN(d)) { const hh = String(d.getHours()).padStart(2, '0'); const mm = String(d.getMinutes()).padStart(2, '0'); return `${hh}:${mm}`; } return String(s); }
 
-        // delete with fallback
-        card.querySelector('.trash').addEventListener('click', async()=>{
-          if(!confirm(`למחוק את "${oldTask}"? זה ימחק גם את כל התגובות המשויכות.`)) return;
-          showBusy(true);
-          try{
-            const p1={ task:String(oldTask).trim(), date:_normDateForServer(oldDate), time:_normTimeForServer(oldTime) };
-            try{ await API.removeTask(p1); }
-            catch(e1){ await API.removeTask({ task:p1.task, date:p1.date });API._clearInitCache();
- }
-            await refreshAndRender();
-          }catch(e){ console.error('removeTask failed', e); alert('מחיקה נכשלה. בדוק שהמשימה/תאריך/שעה תואמים לגיליון.'); }
-          finally{ showBusy(false); }
+          // delete with fallback
+          card.querySelector('.trash').addEventListener('click', async () => {
+            if (!confirm(`למחוק את "${oldTask}"? זה ימחק גם את כל התגובות המשויכות.`)) return;
+            showBusy(true);
+            try {
+              const p1 = { task: String(oldTask).trim(), date: _normDateForServer(oldDate), time: _normTimeForServer(oldTime) };
+              try { await API.removeTask(p1); }
+              catch (e1) {
+                await API.removeTask({ task: p1.task, date: p1.date }); API.clearInitCache();
+              }
+              await refreshAndRender();
+            } catch (e) { console.error('removeTask failed', e); alert('מחיקה נכשלה. בדוק שהמשימה/תאריך/שעה תואמים לגיליון.'); }
+            finally { showBusy(false); }
+          });
+
+          // save
+          card.querySelector('.btn-save').addEventListener('click', async () => {
+            const newTask = card.querySelector('.inp-name').value.trim();
+            const newDate = card.querySelector('.inp-date').value;
+            const newTime = card.querySelector('.inp-time').value;
+            const newNotes = card.querySelector('.inp-notes').value.trim();
+            if (!newTask || !newDate) { alert('שם משימה ותאריך חובה'); return; }
+            const payload = { oldTask, oldDate, oldTime, options, newTask, newDate, newTime, notes: newNotes };
+            showBusy(true);
+            try {
+              if (typeof API.updateTask === 'function') {
+                await API.updateTask(payload); API.clearInitCache();
+              }
+              else if (typeof API.editTask === 'function') {
+                await API.editTask(payload); API.clearInitCache();
+              }
+              else { // fallback
+                await API.removeTask({ task: oldTask, date: oldDate, time: oldTime });
+                await API.addTask({ 'משימה': newTask, 'תאריך': newDate, 'שעה': newTime, 'אפשרויות': options, 'דגשים': newNotes });
+              }
+              await refreshAndRender();
+            } catch (err) { console.error(err); alert('שמירה נכשלה, בדוק את ה־API (updateTask/editTask).'); }
+            finally { showBusy(false); }
+          });
         });
+      }
 
-        // save
-        card.querySelector('.btn-save').addEventListener('click', async()=>{
-          const newTask = card.querySelector('.inp-name').value.trim();
-          const newDate = card.querySelector('.inp-date').value;
-          const newTime = card.querySelector('.inp-time').value;
-          const newNotes= card.querySelector('.inp-notes').value.trim();
-          if(!newTask || !newDate){ alert('שם משימה ותאריך חובה'); return; }
-          const payload = { oldTask, oldDate, oldTime, options, newTask, newDate, newTime, notes: newNotes };
-          showBusy(true);
-          try{
-            if(typeof API.updateTask === 'function'){ await API.updateTask(payload);API._clearInitCache();
- }
-            else if(typeof API.editTask === 'function'){ await API.editTask(payload);API._clearInitCache();
- }
-            else { // fallback
-              await API.removeTask({ task: oldTask, date: oldDate, time: oldTime });
-              await API.addTask({ 'משימה': newTask, 'תאריך': newDate, 'שעה': newTime, 'אפשרויות': options, 'דגשים': newNotes });
-            }
-            await refreshAndRender();
-          }catch(err){ console.error(err); alert('שמירה נכשלה, בדוק את ה־API (updateTask/editTask).'); }
-          finally{ showBusy(false); }
-        });
-      });
-    }
+      function showBusy(on) { const el = document.getElementById('busy'); if (el) el.style.display = on ? 'flex' : 'none'; }
 
-    function showBusy(on){ const el=document.getElementById('busy'); if(el) el.style.display = on? 'flex':'none'; }
-
-    async function refreshAndRender(){
-      await loadAll(true);
-      renderTasks();
-      renderMembers();
-      setNavPadding();
-    }
-
-    /* ===== Tabs ===== */
-    addEventListener('click', (e)=>{
-      const btn = e.target.closest('.tab-btn'); if(!btn) return;
-      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active', p.id === 'tab-'+btn.dataset.tab));
-      setNavPadding();
-    });
-
-    /* ===== Members actions ===== */
-    document.addEventListener('DOMContentLoaded', ()=>{
-      const addBtn = document.getElementById('addMemberBtn');
-      addBtn.addEventListener('click', async()=>{
-        const inp = document.getElementById('newMemberName'); const name = inp.value.trim();
-        if(!name) return inp.reportValidity();
-        showBusy(true);
-        try{ await API.addMember({ name }); inp.value=''; await refreshAndRender();API._clearInitCache();
- }
-        catch(e){ console.error(e); alert('הוספה נכשלה'); }
-        finally{ showBusy(false); }
-      });
-    });
-
-    /* ===== Guard + Init ===== */
-    async function init(){
-      try{
-        await refreshAndRender();
-      }finally{
-        document.getElementById('loader').style.display='none';
-        document.getElementById('page').style.display='block';
+      async function refreshAndRender() {
+        await loadAll(true);
+        renderTasks();
+        renderMembers();
         setNavPadding();
       }
-    }
 
-    (async function guardAdmin(){
-      try{
-        const hasToken = !!(API?.Auth?.token || localStorage.getItem('token'));
-        if(!hasToken){ location.href='index.html?force=1&next=admin'; return; }
-        const me = await API.me();
-        if(!me?.success || me.role!=='admin'){ location.href='home.html?denied=1'; return; }
-        window.gIsAdmin = true;
-        window.gDisplayName = me.displayName || me.username || '';
-        const top=document.querySelector('header.topbar');
-        if(top){
-          const span=document.createElement('span');
-          span.style.cssText='font-size:.8em;margin-inline-start:8px;color:#000;opacity:.85;';
-          span.textContent = window.gDisplayName ? `(${window.gDisplayName} • מנהל)` : '(מנהל)';
-          top.appendChild(span);
-        }
-        const logoutBtn = document.querySelector('.bottom-nav .nav-btn[data-logout]');
-        if (logoutBtn && !logoutBtn._wired){
-          logoutBtn.addEventListener('click', async()=>{ try{ await API.logout(); }catch{} location.href='index.html?force=1'; });
-          logoutBtn._wired = true;
-        }
-        const adminBtn = document.querySelector('.bottom-nav .nav-btn[data-admin]');
-        if (adminBtn){ adminBtn.classList.remove('is-disabled'); adminBtn.title='ניהול'; }
+      /* ===== Tabs ===== */
+      addEventListener('click', (e) => {
+        const btn = e.target.closest('.tab-btn'); if (!btn) return;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + btn.dataset.tab));
+        setNavPadding();
+      });
 
-        await init();
-      }catch(e){
-        console.error('admin guard error:', e);
-        location.href='home.html?err=auth';
+      /* ===== Members actions ===== */
+      document.addEventListener('DOMContentLoaded', () => {
+        const addBtn = document.getElementById('addMemberBtn');
+        addBtn.addEventListener('click', async () => {
+          const inp = document.getElementById('newMemberName'); const name = inp.value.trim();
+          if (!name) return inp.reportValidity();
+          showBusy(true);
+          try {
+            await API.addMember({ name }); inp.value = ''; await refreshAndRender(); API.clearInitCache();
+          }
+          catch (e) { console.error(e); alert('הוספה נכשלה'); }
+          finally { showBusy(false); }
+        });
+      });
+
+      /* ===== Guard + Init ===== */
+      async function init() {
+        try {
+          await refreshAndRender();
+        } finally {
+          document.getElementById('loader').style.display = 'none';
+          document.getElementById('page').style.display = 'block';
+          setNavPadding();
+        }
       }
-    })();
+
+      (async function guardAdmin() {
+        try {
+          const hasToken = !!(API?.Auth?.token || localStorage.getItem('token'));
+          if (!hasToken) { location.href = 'index.html?force=1&next=admin'; return; }
+          const me = await API.me();
+          if (!me?.success || me.role !== 'admin') { location.href = 'home.html?denied=1'; return; }
+          window.gIsAdmin = true;
+          window.gDisplayName = me.displayName || me.username || '';
+          const top = document.querySelector('header.topbar');
+          if (top) {
+            const span = document.createElement('span');
+            span.style.cssText = 'font-size:.8em;margin-inline-start:8px;color:#000;opacity:.85;';
+            span.textContent = window.gDisplayName ? `(${window.gDisplayName} • מנהל)` : '(מנהל)';
+            top.appendChild(span);
+          }
+          const logoutBtn = document.querySelector('.bottom-nav .nav-btn[data-logout]');
+          if (logoutBtn && !logoutBtn._wired) {
+            logoutBtn.addEventListener('click', async () => { try { await API.logout(); } catch { } location.href = 'index.html?force=1'; });
+            logoutBtn._wired = true;
+          }
+          const adminBtn = document.querySelector('.bottom-nav .nav-btn[data-admin]');
+          if (adminBtn) { adminBtn.classList.remove('is-disabled'); adminBtn.title = 'ניהול'; }
+
+          await init();
+        } catch (e) {
+          console.error('admin guard error:', e);
+          location.href = 'home.html?err=auth';
+        }
+      })();
   </script>
   <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(()=>{});
-  }
-</script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(() => { });
+      }
+  </script>
 
 </body>
+
 </html>
