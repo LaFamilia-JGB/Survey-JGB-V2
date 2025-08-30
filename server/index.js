@@ -6,6 +6,19 @@ const jwt = require("jsonwebtoken");
 
 dotenv.config();
 
+const cors = require("cors");
+
+app.use(cors({
+  origin: [
+    "https://survey-jgb.netlify.app",  // הפרונט שלך
+    "http://localhost:8000"            // לפיתוח מקומי
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true
+}));
+
+
+app.options("*", cors());
 const app = express();
 app.use(cors());
 app.use(express.json());
