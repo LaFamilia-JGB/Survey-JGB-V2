@@ -2,151 +2,96 @@
 <html lang="he" dir="rtl">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>🔐 התחברות</title>
-    <link rel="stylesheet" href="assets/css/styles.css" />
-    <link rel="preconnect" href="https://script.google.com">
-    <link rel="dns-prefetch" href="https://script.google.com">
-    <link rel="preconnect" href="https://script.googleapis.com">
-    <link rel="dns-prefetch" href="https://script.googleapis.com">
-    <link rel="prefetch" href="respond.html" as="document">
-    <link rel="prefetch" href="add-task.html" as="document">
-    <link rel="prefetch" href="admin.html" as="document">
-    <link rel="prefetch" href="home.html" as="document">
-    <link rel="preload" href="assets/js/api.js" as="script">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🔐 התחברות</title>
 
-    <style>
-        .container {
-            max-width: 520px;
-            margin: auto;
-            padding: 15px;
-        }
+  <!-- No-Cache -->
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
 
-        .form-card {
-            background: #1f1f1f;
-            border: 1px solid #2b2b2b;
-            border-radius: 12px;
-            padding: 16px;
-        }
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="dns-prefetch" href="https://script.google.com">
+  <link rel="preconnect" href="https://script.googleapis.com">
+  <link rel="dns-prefetch" href="https://script.googleapis.com">
+  <link rel="prefetch" href="respond.html" as="document">
+  <link rel="prefetch" href="add-task.html" as="document">
+  <link rel="prefetch" href="admin.html" as="document">
+  <link rel="prefetch" href="home.html" as="document">
+  <link rel="preload" href="assets/js/api.js" as="script">
 
-        .msg {
-            color: #ff6b6b;
-            min-height: 1.2em;
-            margin-top: 8px;
-            text-align: center;
-        }
-
-        /* ספינר */
-        #spinner {
-            position: fixed;
-            inset: 0;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, .5);
-            z-index: 2000;
-        }
-
-        #spinner .loader {
-            width: 48px;
-            height: 48px;
-            border: 5px solid #444;
-            border-top-color: #f1c40f;
-            border-radius: 50%;
-            animation: spin 0.9s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-    </style>
+  <style>
+    .container { max-width: 520px; margin: auto; padding: 15px; }
+    .form-card { background: #1f1f1f; border: 1px solid #2b2b2b; border-radius: 12px; padding: 16px; }
+    .msg { color: #ff6b6b; min-height: 1.2em; margin-top: 8px; text-align: center; }
+    /* ספינר */
+    #spinner { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.5); z-index: 2000; }
+    #spinner .loader { width: 48px; height: 48px; border: 5px solid #444; border-top-color: #f1c40f; border-radius: 50%; animation: spin .9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 
 <body>
-    <header class="topbar">🔐 התחברות</header>
+  <header class="topbar">🔐 התחברות</header>
 
-    <!-- ספינר -->
-    <div id="spinner">
-        <div class="loader"></div>
+  <!-- ספינר -->
+  <div id="spinner"><div class="loader"></div></div>
+
+  <main class="container">
+    <div class="form-card">
+      <form id="loginForm">
+        <label>שם משתמש</label>
+        <input id="u" autocomplete="username" required />
+        <label>סיסמה</label>
+        <input id="p" type="password" autocomplete="current-password" required />
+        <button class="btn btn-primary" style="width:100%;margin-top:12px;">התחבר</button>
+      </form>
+      <div class="msg" id="msg"></div>
     </div>
+  </main>
 
-    <main class="container">
-        <div class="form-card">
-            <form id="loginForm">
-                <label>שם משתמש</label>
-                <input id="u" autocomplete="username" required />
-                <label>סיסמה</label>
-                <input id="p" type="password" autocomplete="current-password" required />
-                <button class="btn btn-primary" style="width:100%;margin-top:12px;">התחבר</button>
-            </form>
-            <div class="msg" id="msg"></div>
-        </div>
-    </main>
+  <script src="assets/js/api.js?v=9"></script>
+  <script>
+    function showSpinner(){ document.getElementById("spinner").style.display = "flex"; }
+    function hideSpinner(){ document.getElementById("spinner").style.display = "none"; }
 
-<script src="assets/js/api.js?v=9"></script>
-    <script>
-        window.addEventListener('load', () => {
-            if (window.API && typeof API.getInitData === 'function') {
-                API.getInitData().catch(() => { });
-            }
-        });
-    </script>
-    <script>
-        function showSpinner() {
-            document.getElementById("spinner").style.display = "flex";
-        }
-        function hideSpinner() {
-            document.getElementById("spinner").style.display = "none";
-        }
+    // אם כבר מחוברים – הפניה אוטומטית
+    (async function bootLogin() {
+      const q = new URLSearchParams(location.search);
+      const force = q.has('force') || q.get('force') === '1';
+      const wantLogout = q.has('logout') || q.get('logout') === '1';
 
-        // אם כבר מחוברים – הפניה אוטומטית
-        (async function bootLogin() {
-            const q = new URLSearchParams(location.search);
-            const force = q.has('force') || q.get('force') === '1';
-            const wantLogout = q.has('logout') || q.get('logout') === '1';
+      if (wantLogout) { try { await API.logout(); } catch {} }
 
-            if (wantLogout) {
-                try { await API.logout(); } catch { }
-            }
+      if (!force) {
+        try {
+          const me = await API.me();
+          if (me?.success) { location.href = 'home.html'; return; }
+        } catch {}
+      }
+    })();
 
-            if (!force) {
-                try {
-                    const me = await API.me();
-                    if (me?.success) {
-                        location.href = 'home.html';
-                        return;
-                    }
-                } catch { }
-            }
-        })();
+    // Submit התחברות
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      msg.textContent = '';
+      const btn = loginForm.querySelector('button');
+      btn.disabled = true;
+      showSpinner();
 
-        // Submit התחברות
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            msg.textContent = '';
-            const btn = loginForm.querySelector('button');
-            btn.disabled = true;
-            showSpinner();
-
-            try {
-                const r = await API.login(u.value.trim(), p.value);
-                await API.getInitData({ force: true });
-                location.href = 'home.html';
-            } catch (err) {
-                msg.textContent = err?.message || 'שגיאה בהתחברות';
-                hideSpinner(); // במקרה של כישלון
-            } finally {
-                btn.disabled = false;
-            }
-        });
-
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(() => { });
-        }
-    </script>
+      try {
+        const r = await API.login(u.value.trim(), p.value);
+        await API.getInitData({ force: true });
+        location.href = 'home.html';
+      } catch (err) {
+        msg.textContent = err?.message || 'שגיאה בהתחברות';
+        hideSpinner(); // במקרה של כישלון
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
 </body>
-
 </html>

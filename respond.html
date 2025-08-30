@@ -5,6 +5,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>📝 מענה לאירוע</title>
+
+  <!-- No-Cache -->
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <link rel="stylesheet" href="assets/css/styles.css" />
   <link rel="preconnect" href="https://script.google.com">
   <link rel="dns-prefetch" href="https://script.google.com">
@@ -14,6 +20,7 @@
   <link rel="prefetch" href="admin.html" as="document">
   <link rel="prefetch" href="home.html" as="document">
   <link rel="preload" href="assets/js/api.js" as="script">
+
   <style>
     :root {
       --nav-h: 64px;
@@ -174,121 +181,18 @@
       border-width: 4px;
     }
 
-    /* כשהשדה נעול */
     select[disabled] {
       opacity: .9;
       background: #1a1a1a;
       cursor: not-allowed;
     }
 
-    /* נטרול כפתור ניהול ללא־אדמין */
     .nav-btn.is-disabled {
       opacity: .45;
       pointer-events: none;
       filter: grayscale(.2);
     }
   </style>
-
-<!-- 🧠 Fast boot & JSONP cache shim (safe, non-breaking) -->
-<script>
-/* 
-  מטרה: טעינה מהירה במיוחד לעמוד המענה
-  - רינדור מידי מנתונים בקאש (localStorage) אם קיימים
-  - רענון ברקע (SWR)
-  - JSONP עם שם callback קבוע כדי לאפשר קאש בסרוויס-וורקר
-*/
-(function () {
-  const LS_KEY = "initData:v3";         // bump to invalidate ישן
-  const LS_TTL_MS = 10 * 60 * 1000;     // 10 דקות
-  const JSONP_CB = "jsonp_cb_app";      // שם קבוע לצורך קאש
-  const API_BASE = (window.API_BASE || (window.API && (API.BASE || API.base)) || "");
-
-  // ---- LocalStorage small helper ----
-  const InitCache = {
-    get() {
-      try {
-        const o = JSON.parse(localStorage.getItem(LS_KEY) || "null");
-        if (!o) return null;
-        if ((Date.now() - (o.t || 0)) > LS_TTL_MS) return null;
-        return o.d || null;
-      } catch (_) { return null; }
-    },
-    set(d) {
-      try { localStorage.setItem(LS_KEY, JSON.stringify({ t: Date.now(), d })); } catch (_){}
-    },
-    clear(){ try { localStorage.removeItem(LS_KEY); } catch(_){}
-    }
-  };
-  window.InitCache = InitCache; // חשוף לשימוש קיים אם תרצה
-
-  // ---- JSONP fetch (עם שם callback קבוע) ----
-  function jsonp(url, timeoutMs) {
-    return new Promise(function (resolve, reject) {
-      const cbName = JSONP_CB;
-      const s = document.createElement("script");
-      let done = false;
-      const to = setTimeout(function () {
-        cleanup(); reject(new Error("JSONP timeout"));
-      }, timeoutMs || 15000);
-
-      function cleanup() {
-        if (done) return;
-        done = true;
-        clearTimeout(to);
-        s.onerror = s.onload = null;
-        if (s.parentNode) s.parentNode.removeChild(s);
-        try { delete window[cbName]; } catch(_){ window[cbName] = function(){}; }
-      }
-      window[cbName] = function (data) { try { resolve(data); } finally { cleanup(); } };
-      s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + cbName;
-      s.async = true; s.defer = true; s.crossOrigin = "anonymous";
-      s.onerror = function(){ cleanup(); reject(new Error("JSONP network error")); };
-      document.head.appendChild(s);
-    });
-  }
-
-  // ---- Wrap API.getInitData with fast path (לא משנה את המבנה הקיים) ----
-  (function patchGetInitData(){
-    const original = (window.API && typeof API.getInitData === "function") ? API.getInitData.bind(API) : null;
-
-    async function fastGetInitData(opts) {
-      opts = opts || {};
-      const force = !!(opts.force || opts.nocache);
-      // 1) נסה מהקאש (אלא אם force)
-      const cached = InitCache.get();
-      if (cached && !force) return cached;
-
-      // 2) נסה לקרוא את המקור (אם קיים) — ואח"כ שמור בקאש
-      if (original) {
-        try {
-          const data = await original(opts);
-          InitCache.set(data);
-          return data;
-        } catch (e) { /* ניפול לפאלבק JSONP ישיר */ }
-      }
-
-      // 3) פאלבק JSONP ידני (שם callback קבוע כדי שה-SW יוכל לקאש טוב)
-      const base = API_BASE || "";
-      // אם אין API_BASE גלובלי, ננסה פשוט להשתמש כפי שמוגדר בקוד הקיים (לרוב global API.BASE)
-      const urlBase = base || (window.API && (API.BASE || API.base)) || "";
-      if (!urlBase) throw new Error("API_BASE לא מוגדר");
-      const url = urlBase + (urlBase.includes("?") ? "&" : "?") + "action=getInitData" + (force ? "&nocache=1" : "");
-
-      const data = await jsonp(url, 15000);
-      InitCache.set(data);
-      return data;
-    }
-
-    // החלפה עדינה — שומרת API.getInitData לשימושים קיימים
-    window.API = window.API || {};
-    window.API.getInitData = fastGetInitData;
-
-    // רענון ברקע מיד אחרי הטעינה — כדי לעדכן את הקאש בלי לפגוע ברינדור הראשוני
-    try { addEventListener("load", function(){ setTimeout(function(){ fastGetInitData({ force: true }).catch(function(){}); }, 0); }); } catch(_){}
-  })();
-})();
-</script>
-
 </head>
 
 <body>
@@ -343,7 +247,8 @@
     addEventListener('orientationchange', setNavPadding);
   </script>
 
-<script src="assets/js/api.js?v=9"></script>
+  <script src="assets/js/api.js?v=9"></script>
+
 
   <script>
     // יציאה
@@ -362,143 +267,175 @@
     function hebDayName(v) { const d = new Date(v); const days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']; return isNaN(d) ? '' : days[d.getDay()]; }
     const showBusy = on => { const el = document.getElementById('busy'); if (el) el.style.display = on ? 'flex' : 'none'; };
 
-    // --- רנדור עיקרי (ללא פגיעה בעיצוב) ---
-    function render(data, me) {
-      // פרטי משתמש (לרענון כפתור ניהול)
-      const isAdmin = String(me?.role || API?.Auth?.role || 'guest').toLowerCase() === 'admin';
-      const adminBtn = document.querySelector('.bottom-nav .nav-btn[data-admin]');
-      if (adminBtn) {
-        if (isAdmin) { adminBtn.onclick = () => location.href = 'admin.html'; adminBtn.classList.remove('is-disabled'); adminBtn.title = 'ניהול'; }
-        else { adminBtn.classList.add('is-disabled'); adminBtn.title = 'למנהל בלבד'; adminBtn.onclick = null; }
-      }
-
-      const q = new URLSearchParams(location.search);
-      const task = decodeURIComponent(q.get('task') || '');
-      const date = decodeURIComponent(q.get('date') || '');
-      const time = decodeURIComponent(q.get('time') || '');
-
-      document.getElementById('taskTitle').innerText = task;
-      document.getElementById('taskMeta').innerText = `${formatDate(date)} • ${hebDayName(date)} • שעה ${formatTime(time)}`;
-
-      const taskData = (data.tasks || []).find(r => r.משימה === task && r.תאריך === date && r.שעה === time);
-      if (taskData && taskData.דגשים) {
-        const tn = document.getElementById('taskNotes');
-        tn.style.display = 'block'; tn.textContent = '📌 ' + taskData.דגשים;
-      }
-
-      // שמות
-      const memberSelect = document.getElementById('memberSelect');
-      memberSelect.innerHTML = '<option value="">בחר שם</option>';
-      (data.members || []).forEach(m => {
-        const opt = document.createElement('option'); opt.value = m; opt.textContent = m; memberSelect.appendChild(opt);
-      });
-
-      // דיפולט לשם שלי
-      const myName = String(me?.displayName || me?.username || API?.Auth?.displayName || API?.Auth?.username || '').trim();
-      if (myName) {
-        const match = Array.from(memberSelect.options).find(o => String(o.value).trim() === myName);
-        if (match) { memberSelect.value = match.value; }
-        else {
-          const mine = document.createElement('option');
-          mine.value = myName; mine.textContent = myName + ' (אני)';
-          memberSelect.insertBefore(mine, memberSelect.firstChild.nextSibling);
-          memberSelect.value = mine.value;
-        }
-        // נעל ללא־אדמין
-        if (!isAdmin) { memberSelect.disabled = true; memberSelect.title = 'השם נקבע לפי המשתמש המחובר'; }
-      }
-
-      // אופציות מענה
-      let options = []; try { options = taskData?.אפשרויות ? JSON.parse(taskData.אפשרויות) : []; } catch { }
-      const radioContainer = document.getElementById('radioContainer');
-      radioContainer.innerHTML = options.map(opt => `
-        <label>
-          <input type="radio" name="status" value="${escAttr(opt.text)}" data-require="${opt.requireNote ? 'true' : 'false'}">
-          <span>${opt.text}</span>
-        </label>`).join('');
-
-      const noteInput = document.getElementById('note');
-      radioContainer.addEventListener('change', () => {
-        const sel = document.querySelector('input[name="status"]:checked');
-        noteInput.required = sel?.dataset.require === 'true';
-      });
-
-      // שליחה
-      const form = document.getElementById('responseForm');
-      if (!form._wired) {
-        form.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const member = memberSelect.value;
-          const statusEl = document.querySelector('input[name="status"]:checked');
-          const note = noteInput.value.trim();
-          if (!member) { memberSelect.reportValidity(); return; }
-          if (!statusEl) { alert('בחר סטטוס'); return; }
-          if (statusEl.dataset.require === 'true' && !note) { noteInput.reportValidity(); return; }
-
-          const btn = document.getElementById('submitBtn');
-          btn.disabled = true; btn.textContent = 'שולח...'; showBusy(true);
-          try {
-            await API.postResponse(task, date, time, statusEl.value, note, member);
-            // אפס ותחמם קאש חדש כדי ש־Home יוצג מיידית מעודכן
-            if (API.clearInitCache) API.clearInitCache();
-            await API.getInitData({ force: true });
-            location.replace('home.html?fresh=1');
-          } catch (err) {
-            console.error(err); alert('שליחה נכשלה, נסה שוב.');
-          } finally {
-            btn.disabled = false; btn.textContent = 'שלח תגובה'; showBusy(false);
-          }
-        });
-        form._wired = true;
-      }
+// --- רנדור עיקרי (ללא פגיעה בעיצוב/התנהגות) ---
+function render(data, me) {
+  const isAdmin = String(me?.role || API?.Auth?.role || 'guest').toLowerCase() === 'admin';
+  const adminBtn = document.querySelector('.bottom-nav .nav-btn[data-admin]');
+  if (adminBtn) {
+    if (isAdmin) {
+      adminBtn.onclick = () => location.href = 'admin.html';
+      adminBtn.classList.remove('is-disabled');
+      adminBtn.title = 'ניהול';
+    } else {
+      adminBtn.classList.add('is-disabled');
+      adminBtn.title = 'למנהל בלבד';
+      adminBtn.onclick = null;
     }
+  }
 
+  const q = new URLSearchParams(location.search);
+  const task = decodeURIComponent(q.get('task') || '');
+  const date = decodeURIComponent(q.get('date') || '');
+  const time = decodeURIComponent(q.get('time') || '');
+
+  document.getElementById('taskTitle').innerText = task;
+  document.getElementById('taskMeta').innerText =
+    `${formatDate(date)} • ${hebDayName(date)} • שעה ${formatTime(time)}`;
+
+  const taskData = (data.tasks || []).find(
+    r => r.משימה === task && r.תאריך === date && r.שעה === time
+  );
+  if (taskData && taskData.דגשים) {
+    const tn = document.getElementById('taskNotes');
+    tn.style.display = 'block';
+    tn.textContent = '📌 ' + taskData.דגשים;
+  }
+
+  // --- Select של המשתמש ---
+  const memberSelect = document.getElementById('memberSelect');
+  memberSelect.innerHTML = '<option value="">בחר שם</option>';
+
+  if (isAdmin) {
+    // אדמין יכול לבחור כל אחד מהרשימה
+    (data.members || []).forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = m;
+      memberSelect.appendChild(opt);
+    });
+  }
+
+  // דיפולט לשם שלי
+  const myName = String(
+    me?.displayName || me?.username ||
+    API?.Auth?.displayName || API?.Auth?.username || ''
+  ).trim();
+
+  if (myName) {
+    const match = Array.from(memberSelect.options).find(
+      o => String(o.value).trim() === myName
+    );
+    if (match) {
+      memberSelect.value = match.value;
+    } else {
+      const mine = document.createElement('option');
+      mine.value = myName;
+      mine.textContent = isAdmin ? (myName + ' (אני)') : myName;
+      memberSelect.insertBefore(mine, memberSelect.firstChild.nextSibling);
+      memberSelect.value = mine.value;
+    }
+    if (!isAdmin) {
+      memberSelect.disabled = true;
+      memberSelect.title = 'השם נקבע לפי המשתמש המחובר';
+    }
+  }
+
+  // --- אופציות מענה ---
+  let options = [];
+  try {
+    options = taskData?.אפשרויות ? JSON.parse(taskData.אפשרויות) : [];
+  } catch { }
+  const radioContainer = document.getElementById('radioContainer');
+  radioContainer.innerHTML = options.map(opt => `
+    <label>
+      <input type="radio" name="status" value="${escAttr(opt.text)}"
+             data-require="${opt.requireNote ? 'true' : 'false'}">
+      <span>${opt.text}</span>
+    </label>`).join('');
+
+  const noteInput = document.getElementById('note');
+  radioContainer.addEventListener('change', () => {
+    const sel = document.querySelector('input[name="status"]:checked');
+    noteInput.required = sel?.dataset.require === 'true';
+  });
+
+  // --- שליחה ---
+  const form = document.getElementById('responseForm');
+  if (!form._wired) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const member = memberSelect.value;
+      const statusEl = document.querySelector('input[name="status"]:checked');
+      const note = noteInput.value.trim();
+      if (!member) { memberSelect.reportValidity(); return; }
+      if (!statusEl) { alert('בחר סטטוס'); return; }
+      if (statusEl.dataset.require === 'true' && !note) {
+        noteInput.reportValidity(); return;
+      }
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true; btn.textContent = 'שולח...'; showBusy(true);
+      try {
+        await API.postResponse(task, date, time, statusEl.value, note, member);
+        await API.getInitData({ force: true });
+        location.replace('home.html?fresh=1');
+      } catch (err) {
+        console.error(err);
+        alert('שליחה נכשלה, נסה שוב.');
+      } finally {
+        btn.disabled = false; btn.textContent = 'שלח תגובה'; showBusy(false);
+      }
+    });
+    form._wired = true;
+  }
+}
+
+    // אתחול הדף ללא קאש
     async function initRespondPage() {
       try {
-        // 1) ננסה להציג מיידית מהקאש המקומי אם יש
-        const cached = API?.InitCache?.get?.() ? API.InitCache.get() : null;
-        const quickMe = { role: API?.Auth?.role || 'guest', username: API?.Auth?.username || '', displayName: API?.Auth?.displayName || '' };
+        const mePromise = (async () => {
+          try { 
+            return await API.me(); 
+          } catch { 
+            return { 
+              role: (API?.Auth?.role || 'guest'), 
+              username: (API?.Auth?.username || ''), 
+              displayName: (API?.Auth?.displayName || '') 
+            }; 
+          }
+        })();
 
-        if (cached) {
-          render(cached, quickMe);
-          // נוריד את הספלאש כבר עכשיו
-          document.getElementById('splash').style.display = 'none';
-          document.getElementById('main').style.visibility = 'visible';
-          setNavPadding();
+        const dataPromise = API.getInitData();
+        const [me, data] = await Promise.all([mePromise, dataPromise]);
 
-          // 2) ברקע – אימות זהות ורענון נתונים מהשרת
-          API.me().then(me => render(cached, me)).catch(() => { });
-          API.getInitData({ force: true }).then(fresh => {
-            render(fresh, quickMe); // רענון שקט (שומר UI)
-          }).catch(() => { });
-        } else {
-          // אין קאש – נטען רגיל
-          const [me, data] = await Promise.all([
-            (async () => { try { return await API.me(); } catch { return quickMe; } })(),
-            API.getInitData()
-          ]);
+        if (me.role === "admin") {
+          // אדמין → מקבל responses מלאים עם שמות
           render(data, me);
-          document.getElementById('splash').style.display = 'none';
-          document.getElementById('main').style.visibility = 'visible';
-          setNavPadding();
-
-          // רענון ברקע
-          API.getInitData({ force: true }).then(fresh => render(fresh, me)).catch(() => { });
+        } else {
+          // יוזר רגיל → אין responses, בונים סיכום מה-responseCounts
+          const fakeData = {
+            ...data,
+            responses: (data.responseCounts || []).map(s => ({
+              "משימה": s["משימה"],
+              "תאריך": s["תאריך"],
+              "שעה": s["שעה"],
+              "סטטוס": s["סטטוס"],
+              "שם": ""   // יוזר לא רואה שמות
+            }))
+          };
+          render(fakeData, me);
         }
+
       } catch (e) {
         console.error(e);
+      } finally {
         document.getElementById('splash').style.display = 'none';
         document.getElementById('main').style.visibility = 'visible';
+        setNavPadding();
       }
     }
+
     initRespondPage();
-  </script>
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => { });
-    }
-  </script>
-</body>
-
+    </script>
+  </body>
 </html>

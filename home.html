@@ -5,6 +5,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>📋 אירועים</title>
+
+  <!-- No-Cache -->
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <link rel="stylesheet" href="assets/css/styles.css" />
   <style>
     html,
@@ -50,12 +56,10 @@
       text-overflow: ellipsis;
     }
 
-    /* מאפשר ירידת שורה בראש הדף */
     .topbar {
       flex-wrap: wrap;
     }
 
-    /* מצב "שם ארוך" – הופך את הברכה לשורה מתחת לכותרת */
     #greet.multiline {
       position: static;
       inset: auto;
@@ -176,7 +180,7 @@
       justify-content: center;
     }
 
-    @media (min-width: 640px) {
+    @media (min-width:640px) {
       .resp-header .resp-toggle {
         height: 42px;
       }
@@ -312,7 +316,7 @@
       const h = Math.ceil(nav.getBoundingClientRect().height);
       document.documentElement.style.setProperty('--nav-h', h + 'px');
       const spacer = document.getElementById('nav-spacer');
-      if (spacer) spacer.style.height = `calc(${h}px + env(safe-area-inset-bottom,0px))`;
+      if (spacer) spacer.style.height = `calc(${h}px + env(safe-area-inset-bottom, 0px))`;
     }
     addEventListener('DOMContentLoaded', setNavPadding);
     addEventListener('resize', setNavPadding);
@@ -321,41 +325,13 @@
 
   <script src="assets/js/api.js?v=9"></script>
 
-
-
-
-  <!-- ✳️ הוק קטן – אם באנו מ-respond או סומן invalidate, נכריח force וננקה קאש -->
-  <script>
-    (function () {
-      const q = new URLSearchParams(location.search);
-      const needRefresh = q.get('refresh') === '1' || !!localStorage.getItem('initData:invalidate');
-      if (needRefresh && window.API?.clearInitCache) {
-        try { API.clearInitCache(); } catch { }
-      } if (needRefresh) {
-        window.__forceInit = true;
-        localStorage.removeItem('initData:invalidate');
-      }
-    })();
-  </script>
-
   <script>
     let gIsAdmin = false, gDisplayName = '';
 
-    // ספק נתונים – עם force אם באנו מרענון
+    // טעינת נתונים ראשית – תמיד "לייב"
     async function fetchInitData() {
-      const q = new URLSearchParams(location.search);
-      const force = q.has('fresh') || q.get('refresh') === '1' || q.get('fresh') === '1';
-      const data = await API.getInitData({ force });
-      // מנקים את הפרמטר מהשורת כתובת כדי שלא יכריח גם בטעינות הבאות
-      if (force) {
-        q.delete('fresh'); q.delete('refresh');
-        const newQS = q.toString();
-        history.replaceState({}, '', location.pathname + (newQS ? ('?' + newQS) : ''));
-      }
-      return data;
+      return API.getInitData();
     }
-
-
 
     // עזרים
     function formatDate(v) { const d = new Date(v); return isNaN(d) ? v : d.toLocaleDateString('he-IL', { year: 'numeric', month: '2-digit', day: '2-digit' }); }
@@ -363,114 +339,51 @@
     function hebDayName(v) { const d = new Date(v); const days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']; return isNaN(d) ? '' : days[d.getDay()]; }
     function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
     function truncate(str, max = 200) { if (!str) return ""; const s = String(str); return s.length > max ? s.slice(0, max - 1) + "…" : s; }
+    function normDate(x) { const s = String(x || '').trim(); if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; const d = new Date(s); return isNaN(d) ? s : d.toISOString().slice(0, 10); }
+    function normTime(x) { const s = String(x || '').trim(); const m = s.match(/^(\d{1,2}):(\d{2})/); return m ? (('0' + m[1]).slice(-2)) + ':' + m[2] : ''; }
 
-    function normDate(x) {
-      if (x && Object.prototype.toString.call(x) === '[object Date]' && !isNaN(x)) {
-        return new Date(x.getTime() - x.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-      }
-      if (typeof x === 'number') {
-        const d = new Date(Math.round((x - 25569) * 86400) * 1000);
-        if (!isNaN(d)) return d.toISOString().slice(0, 10);
-      }
-      const s = String(x || '').trim();
-      const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-      if (m) return `${m[3]}-${m[2]}-${m[1]}`;
-      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-      return s;
-    }
-    function normTime(x) {
-      const s = String(x || '').trim();
-      const m = s.match(/^(\d{1,2}):(\d{2})/);
-      if (m) return (('0' + m[1]).slice(-2)) + ':' + m[2];
-      return '';
-    }
-
-    // שמות יוצגו רק אם opts.showNames=true (אדמין)
+    // עיבוד תגובות למשימה
     function groupResponsesForTask(taskObj, data, opts = {}) {
       const showNames = !!opts.showNames;
-
       const tTask = String(taskObj.משימה || '').trim();
       const tDate = normDate(taskObj.תאריך);
       const tTime = normTime(taskObj.שעה);
 
-      const match = (ta, da, ti) => {
-        if (String(ta || '').trim() !== tTask) return false;
-        const rDate = normDate(da);
-        if (tDate && rDate && tDate !== rDate) return false;
-        const rTime = normTime(ti);
-        if (tTime && rTime && tTime !== rTime) return false;
-        return true;
-      };
-      const matchNoTime = (ta, da) => {
-        if (String(ta || '').trim() !== tTask) return false;
-        const rDate = normDate(da);
-        return !(tDate && rDate && tDate !== rDate);
-      };
+      const allMembers = (data.members || []).map(x => String(x || '').trim()).filter(Boolean);
 
-      const membersRaw = data.members || data.Members || [];
-      const headerWords = new Set(['שם', 'שם מלא', 'שם פרטי', 'שם משפחה', 'משתתף', 'משתתפים', 'name', 'full name', 'member', 'members', 'firstname', 'lastname']);
-      const allMembers = membersRaw
-        .map(x => String(x || '').trim())
-        .filter(x => x.length > 0 && !headerWords.has((x.toLowerCase?.() || x)));
+      const responses = showNames ? (data.responses || []) : [];
+      const summary = data.responseCounts || [];
 
-      const responses = showNames ? (data.responses || data.Responses || []) : [];
-      const countsAggDay = data.responseCountsByDay || [];
-      const countsAggExact = data.responseCounts || [];
+      const grouped = {}, countsOnly = {}, responded = new Set();
 
-      const grouped = {};
-      const countsOnly = {};
-      const responded = new Set();
-
-      // סה"כ לפי יום אם יש, אחרת לפי התאמה מלאה
-      // סה"כ (עדיפות לשעה אם קיימת)
-      if (tTime && countsAggExact.length) {
-        countsAggExact.forEach(row => {
-          if (!match(row["משימה"], row["תאריך"], row["שעה"])) return;
-          const status = String(row["סטטוס"] || '').trim();
-          const c = Number(row["count"] || 0);
-          if (!status || !c) return;
-          countsOnly[status] = (countsOnly[status] || 0) + c;
-        });
-      } else if (countsAggDay.length) {
-        countsAggDay.forEach(row => {
-          if (!matchNoTime(row["משימה"], row["תאריך"])) return;
-          const status = String(row["סטטוס"] || '').trim();
-          const c = Number(row["count"] || 0);
-          if (!status || !c) return;
-          countsOnly[status] = (countsOnly[status] || 0) + c;
-        });
-      } else {
-        countsAggExact.forEach(row => {
-          if (!match(row["משימה"], row["תאריך"], row["שעה"])) return;
-          const status = String(row["סטטוס"] || '').trim();
-          const c = Number(row["count"] || 0);
-          if (!status || !c) return;
-          countsOnly[status] = (countsOnly[status] || 0) + c;
-        });
-      }
-
-      // שמות לאדמין (כולל הערה)
-      if (showNames && responses.length) {
+      if (showNames) {
         responses.forEach(r => {
-          const ok = tTime ? match(r.משימה, r.תאריך, r.שעה) : matchNoTime(r.משימה, r.תאריך);
-          if (!ok) return;
-          const status = String(r.סטטוס || r.status || '').trim();
-          const name = String(r.שם || r.member || '').trim();
-          const note = String(r.הערה || r.note || '').trim();
+          if (r.משימה !== tTask) return;
+          const status = String(r.סטטוס || '').trim();
+          const name = String(r.שם || '').trim();
+          const note = String(r.הערה || '').trim();
           if (!status || !name) return;
-
           responded.add(name);
-          const label = note ? `${name} – ${note.replace(/\s+/g, ' ')}` : name;
+          const label = note ? `${name} – ${note}` : name;
           (grouped[status] ||= []).push(label);
         });
       }
 
-      // לא הגיבו
+      if (!showNames) {
+        summary.filter(s =>
+          s["משימה"] === taskObj.משימה &&
+          s["תאריך"] === taskObj.תאריך &&
+          s["שעה"] === taskObj.שעה
+        ).forEach(s => {
+          countsOnly[s["סטטוס"]] = Number(s.count);
+        });
+      } else {
+        Object.entries(grouped).forEach(([k, arr]) => { countsOnly[k] = arr.length; });
+      }
+
       let notResponded = [];
       if (showNames) {
-        notResponded = allMembers
-          .filter(m => !responded.has(m))
-          .sort((a, b) => String(a).localeCompare(String(b), 'he'));
+        notResponded = allMembers.filter(m => !responded.has(m));
       } else {
         const totalAnswered = Object.values(countsOnly).reduce((a, b) => a + b, 0);
         const missing = Math.max(0, allMembers.length - totalAnswered);
@@ -484,132 +397,65 @@
       const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)} • ${hebDayName(taskObj.תאריך)}`;
       const lines = [`*${title}*`, ''];
 
-      // כל הסטטוסים שמופיעים או בקבוצות או בסיכומי ספירה
-      const keys = Array.from(new Set([
-        ...Object.keys(grouped || {}),
-        ...Object.keys(countsOnly || {})
-      ])).sort((a, b) => String(a).localeCompare(String(b), 'he'));
-
-      // מונה רץ לשמות (כולל "לא הגיבו")
-      let running = 1;
-
-      if (Object.keys(grouped || {}).length) {
-        keys.forEach(k => {
-          const arr = grouped[k] || [];
-          const cnt = countsOnly[k] || arr.length || 0;
-          if (!cnt) return;
-
-          if (arr.length) {
-            lines.push(`*${k}:*`);
-            arr.forEach(item => {
-              lines.push(`${running}. ${item}`);
-              running++;
-            });
-            lines.push('');
-          } else {
-            // רק ספירה, ללא שמות
-            lines.push(`*${k}:* ${cnt}`);
-          }
-        });
-      } else {
-        // אין שמות (יוזר רגיל) – רק סיכומי ספירה
-        keys.forEach(k => {
-          const cnt = (countsOnly && countsOnly[k]) || 0;
-          if (cnt) lines.push(`*${k}:* ${cnt}`);
-        });
-      }
-
-      // לא הגיבו
-      const names = Array.isArray(notResponded) ? notResponded.filter(Boolean) : [];
-      const nrCount = includeNames ? names.length
-        : (Array.isArray(notResponded) ? notResponded.length : 0);
-
-      if (includeNames && names.length) {
+      Object.keys(countsOnly).forEach(k => {
+        const total = countsOnly[k];
+        if (includeNames && grouped[k]?.length) {
+          lines.push(`*${k}:*`);
+          grouped[k].forEach((n, i) => lines.push(`${i + 1}. ${n}`));
+        } else {
+          lines.push(`*${k}:* ${total}`);
+        }
         lines.push('');
-        lines.push(`*לא הגיבו ❓:*`);
-        names.forEach(n => {
-          lines.push(`${running}. ${n}`);
-          running++;
-        });
-        lines.push('');
-      }
-
-      // סיכום מרוכז בסוף בלבד
-      lines.push('*סיכום:*');
-      keys.forEach(k => {
-        const total = countsOnly[k] || (grouped[k]?.length || 0);
-        if (total) lines.push(`- סה"כ ${k}: ${total}`);
       });
+
+      const nrCount = includeNames ? notResponded.length : notResponded.length;
+      if (includeNames && notResponded.length) {
+        lines.push('*לא הגיבו ❓:*');
+        notResponded.forEach((n, i) => lines.push(`${i + 1}. ${n}`));
+        lines.push('');
+      }
+
+      lines.push('*סיכום:*');
+      Object.keys(countsOnly).forEach(k => lines.push(`- סה"כ ${k}: ${countsOnly[k]}`));
       lines.push(`- סה"כ לא הגיבו: ${nrCount}`);
 
       return lines.join("\n");
     }
+
     function renderResponsesBlock(taskObj, grouped, countsOnly, idx, notResponded) {
-      const isAdmin = !!window.gIsAdmin;
-
+      const isAdmin = gIsAdmin;
       const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)} • ${hebDayName(taskObj.תאריך)}`;
-      const keys = Array.from(new Set([
-        ...Object.keys(grouped || {}),
-        ...Object.keys(countsOnly || {})
-      ])).sort((a, b) => String(a).localeCompare(String(b), 'he'));
-
-      const sections = [];
-      let running = 1;
-
-      if (isAdmin) {
-        keys.forEach(key => {
-          const names = grouped[key] || [];
-          const count = countsOnly[key] || names.length || 0;
-          if (!count) return;
-
-          if (names.length) {
-            sections.push(`
-          <section>
-            <div class="h"><b>*${escapeHtml(key)}:*</b></div>
-            <ol start="${running}">${names.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ol>
-          </section>
-        `);
-            running += names.length;
-          }
-        });
-      }
-
-      const nrCount = Array.isArray(notResponded) ? notResponded.length : 0;
-      let notRespHtml = isAdmin ? `<section><div class="h"><b>*סה"כ לא הגיבו ❓:*</b> ${nrCount}</div></section>` : '';
-      if (isAdmin && Array.isArray(notResponded) && notResponded.length) {
-        notRespHtml =
-          `<section><div class="h"><b>*לא הגיבו ❓:*</b> (${nrCount})</div>` +
-          `<ol start="${running}">${notResponded.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ol></section>`;
-        running += nrCount;
-      }
-
-      const summaryLines = [];
-      keys.forEach(key => {
-        const c = countsOnly[key] || (grouped[key] ? grouped[key].length : 0) || 0;
-        if (c) summaryLines.push(`<div class="h"><b>*סה"כ ${escapeHtml(key)}:*</b> ${c}</div>`);
-      });
-      summaryLines.push(`<div class="h"><b>*סה"כ לא הגיבו:*</b> ${nrCount}</div>`);
-      const summaryHtml = `<section>${summaryLines.join('')}</section>`;
-
       const wrapId = `resp_${idx}`;
       const shareText = makeShareText(taskObj, grouped, notResponded, countsOnly, { includeNames: isAdmin });
 
+      let sections = '';
+      if (isAdmin) {
+        Object.entries(grouped).forEach(([k, arr], i) => {
+          if (!arr.length) return;
+          sections += `<section><div class="h"><b>*${escapeHtml(k)}:*</b></div><ol start="${i + 1}">${arr.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ol></section>`;
+        });
+        if (notResponded.length) {
+          sections += `<section><div class="h"><b>*לא הגיבו ❓:*</b> (${notResponded.length})</div><ol>${notResponded.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ol></section>`;
+        }
+      }
+
+      const summaryLines = Object.entries(countsOnly).map(([k, v]) => `<div class="h"><b>*סה"כ ${escapeHtml(k)}:*</b> ${v}</div>`);
+      summaryLines.push(`<div class="h"><b>*סה"כ לא הגיבו:*</b> ${notResponded.length}</div>`);
+
       return `
-    <div class="resp-wrap" id="${wrapId}">
-      <div class="resp-header">
-        <button class="btn btn-secondary resp-toggle" onclick="toggleResp('${wrapId}')">▶️ רשימה</button>
-        <button class="btn btn-icon" onclick="copyShare('${encodeURIComponent(shareText)}')" title="העתק">📋</button>
-      </div>
-      <div class="resp-body">
-        <div class="resp-title">${escapeHtml(title)}</div>
-        <div class="resp-list">
-          ${isAdmin ? sections.join("") : ""}   <!-- שמות רק לאדמין -->
-          ${isAdmin ? notRespHtml : ""}         <!-- "לא הגיבו" עם שמות רק לאדמין -->
-          ${summaryHtml}                         <!-- לכולם: סיכומי סה"כ בלבד -->
+      <div class="resp-wrap" id="${wrapId}">
+        <div class="resp-header">
+          <button class="btn btn-secondary resp-toggle" onclick="toggleResp('${wrapId}')">▶️ רשימה</button>
+          <button class="btn btn-icon" onclick="copyShare('${encodeURIComponent(shareText)}')" title="העתק">📋</button>
         </div>
-      </div>
-    </div>
-  `;
+        <div class="resp-body">
+          <div class="resp-title">${escapeHtml(title)}</div>
+          <div class="resp-list">
+            ${sections}
+            <section>${summaryLines.join('')}</section>
+          </div>
+        </div>
+      </div>`;
     }
 
     function toggleResp(id) {
@@ -621,65 +467,48 @@
     async function copyShare(encoded) {
       const txt = decodeURIComponent(encoded);
       try { await navigator.clipboard.writeText(txt); alert('הועתק ללוח'); }
-      catch {
-        const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta);
-        ta.select(); document.execCommand('copy'); ta.remove(); alert('הועתק ללוח (fallback)');
-      }
+      catch { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); alert('הועתק ללוח (fallback)'); }
     }
     function openRespond(encTask, encDate, encTime) {
       location.href = `respond.html?task=${encTask}&date=${encDate}&time=${encTime}`;
     }
 
-    // טעינה + רנדר – משימות בסדר הפוך (האחרונה למעלה)
+    // טעינה ורנדר
     async function loadTasks() {
       const list = document.getElementById('taskList');
       try {
         const data = await fetchInitData();
-
-        // 👈 אם השרת החזיר role, נעדכן את הדגל לפני הקיבוץ/רנדר
-        if (data && data.role) {
-          window.gIsAdmin = (String(data.role).toLowerCase() === 'admin');
-        }
+        if (data?.role) gIsAdmin = (String(data.role).toLowerCase() === 'admin');
 
         const tasks = (data.tasks || []).slice().reverse();
-
         if (!tasks.length) {
           list.innerHTML = '<p style="text-align:center;color:#aaa;">אין אירועים זמינים</p>';
         } else {
           list.innerHTML = tasks.map((t, i) => {
             const notes = t.דגשים ? `<div class="task-notes">📌 ${escapeHtml(truncate(t.דגשים, 220))}</div>` : '';
             const { grouped, countsOnly, notResponded } = groupResponsesForTask(t, data, { showNames: gIsAdmin });
-
             const respBlock = renderResponsesBlock(t, grouped, countsOnly, i, notResponded);
             const encTask = encodeURIComponent(t.משימה);
             const encDate = encodeURIComponent(t.תאריך);
             const encTime = encodeURIComponent(t.שעה);
             return `
-              <div class="task-card">
-                <div class="task-title">${i + 1}. ${escapeHtml(t.משימה)}</div>
-                <div class="task-meta">${formatDate(t.תאריך)} • ${hebDayName(t.תאריך)} • שעה ${formatTime(t.שעה)}</div>
-                ${notes}
-                <div class="actions">
-                  <button class="btn" onclick="openRespond('${encTask}','${encDate}','${encTime}')">פתח</button>
-                </div>
-                ${respBlock}
+            <div class="task-card">
+              <div class="task-title">${i + 1}. ${escapeHtml(t.משימה)}</div>
+              <div class="task-meta">${formatDate(t.תאריך)} • ${hebDayName(t.תאריך)} • שעה ${formatTime(t.שעה)}</div>
+              ${notes}
+              <div class="actions">
+                <button class="btn" onclick="openRespond('${encTask}','${encDate}','${encTime}')">פתח</button>
               </div>
-            `;
+              ${respBlock}
+            </div>`;
           }).join('');
         }
       } catch (err) {
         console.error(err);
         if (list) list.innerHTML = '<p style="color:red;text-align:center;">שגיאה בטעינת אירועים</p>';
       } finally {
-        const loader = document.getElementById('loader'), page = document.getElementById('page');
-        if (loader) loader.style.display = 'none';
-        if (page) page.style.display = 'block';
-
-        // ניקוי הפרמטר אחרי שהעמוד מוצג – כדי שלא יכריח רענון שוב
-        if (location.search.includes('refresh=1')) {
-          history.replaceState(null, '', 'home.html');
-        }
-
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('page').style.display = 'block';
         setNavPadding();
       }
     }
@@ -690,65 +519,31 @@
         const me = await API.me();
         if (me?.success) {
           gIsAdmin = (me.role === 'admin');
-          gDisplayName = me.displayName || me.fullName || me.username || '';
-        } else {
-          gIsAdmin = API.isAdmin ? API.isAdmin() : false;
-          gDisplayName = API.Auth?.displayName || API.Auth?.username || '';
+          gDisplayName = me.displayName || me.username || '';
         }
-      } catch {
-        gIsAdmin = API.isAdmin ? API.isAdmin() : false;
-        gDisplayName = API.Auth?.displayName || API.Auth?.username || '';
-      }
+      } catch { }
 
-      // ברכה
       const greetEl = document.getElementById('greet');
       if (greetEl) {
-        greetEl.textContent = gDisplayName
-          ? `ברוך הבא ${gDisplayName}${gIsAdmin ? ' – מנהל' : ''}`
-          : (gIsAdmin ? 'מנהל' : '');
+        greetEl.textContent = gDisplayName ? `ברוך הבא ${gDisplayName}${gIsAdmin ? ' – מנהל' : ''}` : '';
       }
 
-      function fitGreet() {
-        const el = document.getElementById('greet');
-        if (!el) return;
-        el.classList.remove('multiline');
-        if (el.scrollWidth > el.clientWidth) {
-          el.classList.add('multiline');
-        }
-      }
-      fitGreet();
-      window.addEventListener('resize', fitGreet);
-
-      // כפתור ניהול
       const adminBtn = document.querySelector('.bottom-nav .nav-btn[data-admin]');
       if (adminBtn) {
         if (!gIsAdmin) {
-          adminBtn.classList.add('is-disabled');
-          adminBtn.setAttribute('aria-disabled', 'true');
-          adminBtn.disabled = true;
-          adminBtn.removeAttribute('onclick');
-          adminBtn.title = 'למנהלים בלבד';
+          adminBtn.classList.add('is-disabled'); adminBtn.disabled = true; adminBtn.title = 'למנהלים בלבד';
         } else {
-          adminBtn.classList.remove('is-disabled');
-          adminBtn.removeAttribute('aria-disabled');
-          adminBtn.disabled = false;
-          if (!adminBtn._wired) {
-            adminBtn.addEventListener('click', () => location.href = 'admin.html');
-            adminBtn._wired = true;
-          }
+          adminBtn.classList.remove('is-disabled'); adminBtn.disabled = false;
+          if (!adminBtn._wired) { adminBtn.addEventListener('click', () => location.href = 'admin.html'); adminBtn._wired = true; }
         }
       }
 
-      // כפתור יציאה
       const logoutBtn = document.querySelector('.bottom-nav .nav-btn[data-logout]');
       if (logoutBtn) {
         const hasToken = !!(API?.Auth?.token || localStorage.getItem('token'));
         logoutBtn.style.display = hasToken ? 'inline-flex' : 'none';
         if (!logoutBtn._wired) {
-          logoutBtn.addEventListener('click', async () => {
-            try { await API.logout(); } catch { }
-            location.href = 'index.html?force=1';
-          });
+          logoutBtn.addEventListener('click', async () => { try { await API.logout(); } catch { } location.href = 'index.html?force=1'; });
           logoutBtn._wired = true;
         }
       }
@@ -758,12 +553,3 @@
 
     initAuthAndUI();
   </script>
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => { });
-    }
-  </script>
-</body>
-
-</html>
