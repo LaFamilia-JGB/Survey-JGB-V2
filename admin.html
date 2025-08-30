@@ -600,32 +600,110 @@
     }
 
     /* ===== Tasks ===== */
-    function renderTasks() {
-      const host = document.getElementById('tasksList');
-      const tasks = [...(gData.tasks || [])].sort((a, b) => new Date(b.תאריך) - new Date(a.תאריך));
-      if (!tasks.length) { host.innerHTML = '<p style="color:#aaa;">אין משימות</p>'; return; }
+function renderTasks() {
+  const host = document.getElementById('tasksList');
+  const tasks = [...(gData.tasks || [])].sort((a, b) => new Date(b.תאריך) - new Date(a.תאריך));
+  if (!tasks.length) { 
+    host.innerHTML = '<p style="color:#aaa;">אין משימות</p>'; 
+    return; 
+  }
 
-      host.innerHTML = tasks.map((t, i) => {
-        const meta = `${formatDate(t.תאריך)} • ${hebDayName(t.תאריך)} • שעה ${formatTime(t.שעה)}`;
-        const notes = t.דגשים ? `<div class="task-notes">📌 ${esc(t.דגשים)}</div>` : '';
-        const { grouped, countsOnly, notResponded } = groupResponsesForTask(t, gData, { showNames: true });
-        const respBlock = renderResponsesBlock(t, grouped, countsOnly, i, notResponded);
-        return `
-        <div class="task-card">
-          <div class="task-title">
-            <span>${i + 1}. ${esc(t.משימה)}</span>
-            <div class="title-actions">
-              <button class="btn-icon btn-edit">✏️</button>
-              <button class="btn-icon trash">🗑️</button>
-            </div>
+  host.innerHTML = tasks.map((t, i) => {
+    const meta = `${formatDate(t.תאריך)} • ${hebDayName(t.תאריך)} • שעה ${formatTime(t.שעה)}`;
+    const notes = t.דגשים ? `<div class="task-notes">📌 ${esc(t.דגשים)}</div>` : '';
+    const { grouped, countsOnly, notResponded } = groupResponsesForTask(t, gData, { showNames: true });
+    const respBlock = renderResponsesBlock(t, grouped, countsOnly, i, notResponded);
+
+    return `
+      <div class="task-card" 
+           data-task="${esc(t.משימה)}" 
+           data-date="${esc(normDate(t.תאריך))}" 
+           data-time="${esc(normTime(t.שעה))}" 
+           data-options='${esc(t.אפשרויות || "[]")}'>
+
+        <div class="task-title">
+          <span>${i + 1}. ${esc(t.משימה)}</span>
+          <div class="title-actions">
+            <button class="btn-icon btn-edit">✏️</button>
+            <button class="btn-icon trash">🗑️</button>
           </div>
-          <div class="task-meta">${meta}</div>
-          ${notes}
-          ${respBlock}
-          <div class="edit-area" style="display:none;"> ... </div>
-        </div>`;
-      }).join("");
-    }
+        </div>
+
+        <div class="task-meta">${meta}</div>
+        ${notes}
+        ${respBlock}
+
+        <div class="edit-area" style="display:none;">
+          <div class="edit-row">
+            <input type="text" class="inp-name" value="${esc(t.משימה)}">
+            <input type="date" class="inp-date" value="${esc(normDate(t.תאריך))}">
+            <input type="time" class="inp-time" value="${esc(normTime(t.שעה))}">
+            <textarea class="inp-notes">${esc(t.דגשים || "")}</textarea>
+          </div>
+          <div class="actions">
+            <button class="btn btn-secondary btn-cancel">בטל</button>
+            <button class="btn btn-save">💾 שמור</button>
+          </div>
+        </div>
+      </div>`;
+  }).join("");
+
+  // 🎯 אחרי שהמשימות נבנו – לחבר מאזינים
+  host.querySelectorAll('.task-card').forEach(card => {
+    const oldTask = card.dataset.task;
+    const oldDate = card.dataset.date;
+    const oldTime = card.dataset.time;
+    const options = card.dataset.options || "[]";
+
+    // ✏️ עריכה
+    card.querySelector('.btn-edit').addEventListener('click', () => {
+      card.querySelector('.edit-area').style.display = 'block';
+    });
+
+    // ❌ ביטול
+    card.querySelector('.btn-cancel').addEventListener('click', () => {
+      card.querySelector('.edit-area').style.display = 'none';
+    });
+
+    // 🗑️ מחיקה
+    card.querySelector('.trash').addEventListener('click', async () => {
+      if (!confirm(`למחוק את "${oldTask}"?`)) return;
+      showBusy(true);
+      try {
+        await API.removeTask({ task: oldTask, date: oldDate, time: oldTime });
+        await refreshAndRender();
+      } catch (e) {
+        console.error('removeTask failed', e);
+        alert('מחיקה נכשלה');
+      } finally {
+        showBusy(false);
+      }
+    });
+
+    // 💾 שמירה
+    card.querySelector('.btn-save').addEventListener('click', async () => {
+      const newTask = card.querySelector('.inp-name').value.trim();
+      const newDate = card.querySelector('.inp-date').value;
+      const newTime = card.querySelector('.inp-time').value;
+      const newNotes = card.querySelector('.inp-notes').value.trim();
+      if (!newTask || !newDate) {
+        alert('שם משימה ותאריך חובה');
+        return;
+      }
+      const payload = { oldTask, oldDate, oldTime, options, newTask, newDate, newTime, notes: newNotes };
+      showBusy(true);
+      try {
+        await API.updateTask(payload);
+        await refreshAndRender();
+      } catch (err) {
+        console.error(err);
+        alert('שמירה נכשלה');
+      } finally {
+        showBusy(false);
+      }
+    });
+  });
+}
 
     function showBusy(on) { const el = document.getElementById('busy'); if (el) el.style.display = on ? 'flex' : 'none'; }
     async function refreshAndRender() { await loadAll(true); renderTasks(); renderMembers(); setNavPadding(); }
