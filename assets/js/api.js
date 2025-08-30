@@ -1,5 +1,6 @@
 /** 🔗 בסיס ה-API (שרת Node/Express) */
-const API_BASE = "/api";
+const API_BASE = "https://survey-jgb-v2.onrender.com";
+
 /* ======================= קריאה ל-API ======================= */
 async function apiCall(path, method = "POST", data = null) {
   const opts = { method, headers: { "Content-Type": "application/json" } };
