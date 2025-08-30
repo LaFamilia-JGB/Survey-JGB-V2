@@ -51,6 +51,13 @@ function normalizeOptions(raw) {
     return { arr, json: JSON.stringify(arr) };
 }
 
+// בדוק אם יש לך כבר app = express()
+app.get('/api/healthz', (req, res) => {
+  res.json({ ok: true, ts: Date.now() });
+});
+
+
+
 // 🟡 Debug – כל המשימות ישירות מה־DB
 app.get("/api/tasks", async (req, res) => {
     try {
