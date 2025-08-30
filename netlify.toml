@@ -1,0 +1,5 @@
+[[redirects]]
+  from = "/api/*"
+  to = "https://survey-jgb-v2.onrender.com/api/:splat"
+  status = 200
+  force = true
