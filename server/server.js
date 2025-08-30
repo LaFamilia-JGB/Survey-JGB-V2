@@ -7,7 +7,15 @@ dotenv.config();
 const { Pool } = pkg;
 
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.json());
+
+// 🟢 Health Check endpoint
+app.get("/api/healthz", (req, res) => {
+  res.json({ ok: true, ts: Date.now() });
+});
 
 // חיבור ל-Neon (Postgres)
 const pool = new Pool({
@@ -15,11 +23,7 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// בריאות השרת
+// בריאות השרת מול DB
 app.get("/health", async (req, res) => {
   try {
     const result = await pool.query("SELECT NOW()");
@@ -31,6 +35,6 @@ app.get("/health", async (req, res) => {
 });
 
 // מאזינים
-app.listen(port, () => {
-  console.log(`🚀 Server running on http://localhost:${port}`);
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
