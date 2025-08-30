@@ -1,5 +1,5 @@
 /** 🔗 בסיס ה-API (שרת Node/Express) */
-const API_BASE = "https://survey-jgb-v2.onrender.com";
+const API_BASE = "https://survey-jgb-v2.onrender.com/api";
 
 /* ======================= קריאה ל-API ======================= */
 async function apiCall(path, method = "POST", data = null) {
