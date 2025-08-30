@@ -1,21 +1,25 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import pkg from "pg";
-import jwt from "jsonwebtoken";
-
-const { Pool } = pkg;
+const express = require("express");
+const cors = require("cors");
+const dotenv = require("dotenv");
+const { Pool } = require("pg");
+const jwt = require("jsonwebtoken");
 
 dotenv.config();
 
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-});
-
 const app = express();
 app.use(cors());
-app.use(express.json()); // מספיק, לא צריך parser כפול
+app.use(express.json());
+
+// ================== HEALTH ==================
+app.get("/api/healthz", (req, res) => {
+  res.json({ ok: true, ts: Date.now() });
+});
+
+// ================== DB ==================
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
 
 // ================== HELPERS ==================
 function toHHMM(t) {
@@ -50,13 +54,6 @@ function normalizeOptions(raw) {
     );
     return { arr, json: JSON.stringify(arr) };
 }
-
-// בדוק אם יש לך כבר app = express()
-app.get('/api/healthz', (req, res) => {
-  res.json({ ok: true, ts: Date.now() });
-});
-
-
 
 // 🟡 Debug – כל המשימות ישירות מה־DB
 app.get("/api/tasks", async (req, res) => {
@@ -430,8 +427,8 @@ app.post("/api/logout", (req, res) => {
     res.json({ success: true });
 });
 
-// ================== SERVER START ==================
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
