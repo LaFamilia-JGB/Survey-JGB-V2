@@ -28,7 +28,6 @@
       text-align: center;
     }
 
-    /* Topbar + greet */
     header.topbar {
       position: relative;
       display: flex;
@@ -151,47 +150,6 @@
       flex-wrap: wrap;
     }
 
-    /* שורת כפתורי הרשימה/העתקה */
-    .resp-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-direction: row;
-    }
-
-    .resp-header .resp-toggle {
-      flex: 1 1 auto;
-      min-width: 0;
-      height: 40px;
-      border-radius: 10px;
-      font-weight: 700;
-      padding-inline: 12px;
-    }
-
-    .resp-header .btn-icon {
-      flex: 0 0 auto;
-      width: 40px;
-      min-width: 40px;
-      height: 40px;
-      padding: 0;
-      border-radius: 10px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    @media (min-width:640px) {
-      .resp-header .resp-toggle {
-        height: 42px;
-      }
-
-      .resp-header .btn-icon {
-        width: 42px;
-        min-width: 42px;
-        height: 42px;
-      }
-    }
-
     .resp-wrap {
       margin-top: 10px;
       border-top: 1px solid #333;
@@ -245,7 +203,6 @@
       margin-bottom: 2px;
     }
 
-    /* Loader */
     #loader {
       display: flex;
       justify-content: center;
@@ -269,7 +226,6 @@
       }
     }
 
-    /* Bottom nav */
     .bottom-nav .nav-btn {
       display: inline-flex;
       align-items: center;
@@ -324,37 +280,36 @@
   </script>
 
   <script src="assets/js/api.js?v=9"></script>
-
   <script>
     let gIsAdmin = false, gDisplayName = '';
 
-    // טעינת נתונים ראשית – תמיד "לייב"
-    async function fetchInitData() {
-      return API.getInitData();
-    }
+    async function fetchInitData() { return API.getInitData(); }
 
-    // עזרים
-    function formatDate(v) { const d = new Date(v); return isNaN(d) ? v : d.toLocaleDateString('he-IL', { year: 'numeric', month: '2-digit', day: '2-digit' }); }
-    function formatTime(v) { const t = new Date(v); if (!isNaN(t)) return t.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }); if (/^\d{1,2}:\d{2}$/.test(v)) return v; return v || ''; }
-    function hebDayName(v) { const d = new Date(v); const days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']; return isNaN(d) ? '' : days[d.getDay()]; }
-    function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
-    function truncate(str, max = 200) { if (!str) return ""; const s = String(str); return s.length > max ? s.slice(0, max - 1) + "…" : s; }
-    function normDate(x) { const s = String(x || '').trim(); if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; const d = new Date(s); return isNaN(d) ? s : d.toISOString().slice(0, 10); }
-    function normTime(x) { const s = String(x || '').trim(); const m = s.match(/^(\d{1,2}):(\d{2})/); return m ? (('0' + m[1]).slice(-2)) + ':' + m[2] : ''; }
+    /* ===== Utils ===== */
+    const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;");
+    const truncate = (str, max = 200) => { if (!str) return ""; const s = String(str); return s.length > max ? s.slice(0, max - 1) + "…" : s; };
+    const normDate = x => { const s = String(x || '').trim(); if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; const d = new Date(s); return isNaN(d) ? s : d.toISOString().slice(0, 10); };
+    const normTime = x => { const s = String(x || '').trim(); const m = s.match(/^(\d{1,2}):(\d{2})/); return m ? (('0' + m[1]).slice(-2)) + ':' + m[2] : ''; };
+    const formatDate = v => { const d = new Date(v); return isNaN(d) ? v : d.toLocaleDateString('he-IL', { year: 'numeric', month: '2-digit', day: '2-digit' }); };
+    const formatTime = v => { const t = new Date(v); if (!isNaN(t)) return t.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }); if (/^\d{1,2}:\d{2}$/.test(v)) return v; return v || ''; };
+    const hebDayName = v => { const d = new Date(v); const days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']; return isNaN(d) ? '' : days[d.getDay()]; };
 
-    // עיבוד תגובות למשימה
+    /* ===== Group + Counts ===== */
     function groupResponsesForTask(taskObj, data, opts = {}) {
       const showNames = !!opts.showNames;
       const tTask = String(taskObj.משימה || '').trim();
-      const tDate = normDate(taskObj.תאריך);
-      const tTime = normTime(taskObj.שעה);
 
-      const allMembers = (data.members || []).map(x => String(x || '').trim()).filter(Boolean);
+      const allMembers = (data.members || [])
+        .map(m => typeof m === 'string' ? m : (m.display_name || m.username || ''))
+        .map(s => String(s).trim())
+        .filter(Boolean);
 
       const responses = showNames ? (data.responses || []) : [];
       const summary = data.responseCounts || [];
 
-      const grouped = {}, countsOnly = {}, responded = new Set();
+      const grouped = {};
+      const countsOnly = {};
+      const responded = new Set();
 
       if (showNames) {
         responses.forEach(r => {
@@ -370,13 +325,9 @@
       }
 
       if (!showNames) {
-        summary.filter(s =>
-          s["משימה"] === taskObj.משימה &&
-          s["תאריך"] === taskObj.תאריך &&
-          s["שעה"] === taskObj.שעה
-        ).forEach(s => {
-          countsOnly[s["סטטוס"]] = Number(s.count);
-        });
+        summary
+          .filter(s => s["משימה"] === taskObj.משימה && s["תאריך"] === taskObj.תאריך && s["שעה"] === taskObj.שעה)
+          .forEach(s => { countsOnly[s["סטטוס"]] = Number(s.count); });
       } else {
         Object.entries(grouped).forEach(([k, arr]) => { countsOnly[k] = arr.length; });
       }
@@ -393,31 +344,42 @@
       return { grouped, countsOnly, notResponded };
     }
 
+    function compressCounts(countsOnly) {
+      let arrive = 0, notArrive = 0;
+      for (const [k, v] of Object.entries(countsOnly)) {
+        const key = String(k);
+        const isNo = key.includes('לא מגיע') || key.trim().startsWith('❌');
+        if (isNo) notArrive += Number(v || 0);
+        else arrive += Number(v || 0);
+      }
+      return { arrive, notArrive };
+    }
+
+    /* ===== Share Text ===== */
     function makeShareText(taskObj, grouped, notResponded, countsOnly, { includeNames = false } = {}) {
       const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)} • ${hebDayName(taskObj.תאריך)}`;
       const lines = [`*${title}*`, ''];
 
-      Object.keys(countsOnly).forEach(k => {
-        const total = countsOnly[k];
-        if (includeNames && grouped[k]?.length) {
-          lines.push(`*${k}:*`);
-          grouped[k].forEach((n, i) => lines.push(`${i + 1}. ${n}`));
-        } else {
-          lines.push(`*${k}:* ${total}`);
-        }
-        lines.push('');
-      });
+      let i = 1;
+      if (includeNames) {
+        Object.entries(grouped).forEach(([k, arr]) => {
+          if (arr.length) {
+            lines.push(`*${k}:*`);
+            arr.forEach(n => lines.push(`${i++}. ${n}`));
+            lines.push('');
+          }
+        });
 
-      const nrCount = includeNames ? notResponded.length : notResponded.length;
-      if (includeNames && notResponded.length) {
-        lines.push('*לא הגיבו ❓:*');
-        notResponded.forEach((n, i) => lines.push(`${i + 1}. ${n}`));
-        lines.push('');
+        if (notResponded.length) {
+          lines.push('*לא הגיבו ❓:*');
+          notResponded.forEach(n => lines.push(`${i++}. ${n}`));
+          lines.push('');
+        }
       }
 
       lines.push('*סיכום:*');
       Object.keys(countsOnly).forEach(k => lines.push(`- סה"כ ${k}: ${countsOnly[k]}`));
-      lines.push(`- סה"כ לא הגיבו: ${nrCount}`);
+      lines.push(`- סה"כ לא הגיבו: ${notResponded.length}`);
 
       return lines.join("\n");
     }
@@ -430,33 +392,42 @@
 
       let sections = '';
       if (isAdmin) {
-        Object.entries(grouped).forEach(([k, arr], i) => {
+        // מציג רשימות רק לאדמין
+        let counter = 1;
+        Object.keys(grouped).sort((a, b) => a.localeCompare(b, 'he')).forEach(k => {
+          const arr = grouped[k] || [];
           if (!arr.length) return;
-          sections += `<section><div class="h"><b>*${escapeHtml(k)}:*</b></div><ol start="${i + 1}">${arr.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ol></section>`;
+          sections += `<section><div class="h"><b>${esc(k)}:</b></div><ol start="${counter}">${arr.map(n => `<li>${esc(n)}</li>`).join('')}</ol></section>`;
+          counter += arr.length;
         });
         if (notResponded.length) {
-          sections += `<section><div class="h"><b>*לא הגיבו ❓:*</b> (${notResponded.length})</div><ol>${notResponded.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ol></section>`;
+          sections += `<section><div class="h"><b>לא הגיבו ❓:</b> (${notResponded.length})</div><ol start="${counter}">${notResponded.map(n => `<li>${esc(n)}</li>`).join('')}</ol></section>`;
         }
       }
 
-      const summaryLines = Object.entries(countsOnly).map(([k, v]) => `<div class="h"><b>*סה"כ ${escapeHtml(k)}:*</b> ${v}</div>`);
-      summaryLines.push(`<div class="h"><b>*סה"כ לא הגיבו:*</b> ${notResponded.length}</div>`);
+      // === סיכום משותף לשני המצבים ===
+      let summaryHtml = Object.entries(countsOnly)
+        .sort(([a], [b]) => a.localeCompare(b, 'he'))
+        .map(([k, v]) => `<div class="h"><b>סה"כ ${esc(k)}:</b> ${v}</div>`)
+        .join('');
+      summaryHtml += `<div class="h"><b>סה"כ לא הגיבו:</b> ${notResponded.length}</div>`;
 
       return `
-      <div class="resp-wrap" id="${wrapId}">
-        <div class="resp-header">
-          <button class="btn btn-secondary resp-toggle" onclick="toggleResp('${wrapId}')">▶️ רשימה</button>
-          <button class="btn btn-icon" onclick="copyShare('${encodeURIComponent(shareText)}')" title="העתק">📋</button>
+    <div class="resp-wrap" id="${wrapId}">
+      <div class="resp-header">
+        <button class="btn btn-secondary resp-toggle" onclick="toggleResp('${wrapId}')">▶️ רשימה</button>
+        <button class="btn btn-icon" onclick="copyShare('${encodeURIComponent(shareText)}')" title="העתק">📋</button>
+      </div>
+      <div class="resp-body">
+        <div class="resp-title">${esc(title)}</div>
+        <div class="resp-list">
+          ${sections}
+          <section>${summaryHtml}</section>
         </div>
-        <div class="resp-body">
-          <div class="resp-title">${escapeHtml(title)}</div>
-          <div class="resp-list">
-            ${sections}
-            <section>${summaryLines.join('')}</section>
-          </div>
-        </div>
-      </div>`;
+      </div>
+    </div>`;
     }
+
 
     function toggleResp(id) {
       const el = document.getElementById(id); if (!el) return;
@@ -464,16 +435,21 @@
       const btn = el.querySelector('.resp-toggle');
       if (btn) btn.textContent = el.classList.contains('resp-open') ? '🔽 רשימה' : '▶️ רשימה';
     }
+
     async function copyShare(encoded) {
       const txt = decodeURIComponent(encoded);
       try { await navigator.clipboard.writeText(txt); alert('הועתק ללוח'); }
-      catch { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); alert('הועתק ללוח (fallback)'); }
+      catch {
+        const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove(); alert('הועתק ללוח (fallback)');
+      }
     }
+
     function openRespond(encTask, encDate, encTime) {
       location.href = `respond.html?task=${encTask}&date=${encDate}&time=${encTime}`;
     }
 
-    // טעינה ורנדר
+    /* ===== Load & Render ===== */
     async function loadTasks() {
       const list = document.getElementById('taskList');
       try {
@@ -485,7 +461,7 @@
           list.innerHTML = '<p style="text-align:center;color:#aaa;">אין אירועים זמינים</p>';
         } else {
           list.innerHTML = tasks.map((t, i) => {
-            const notes = t.דגשים ? `<div class="task-notes">📌 ${escapeHtml(truncate(t.דגשים, 220))}</div>` : '';
+            const notes = t.דגשים ? `<div class="task-notes">📌 ${esc(truncate(t.דגשים, 220))}</div>` : '';
             const { grouped, countsOnly, notResponded } = groupResponsesForTask(t, data, { showNames: gIsAdmin });
             const respBlock = renderResponsesBlock(t, grouped, countsOnly, i, notResponded);
             const encTask = encodeURIComponent(t.משימה);
@@ -493,7 +469,7 @@
             const encTime = encodeURIComponent(t.שעה);
             return `
             <div class="task-card">
-              <div class="task-title">${i + 1}. ${escapeHtml(t.משימה)}</div>
+              <div class="task-title">${i + 1}. ${esc(t.משימה)}</div>
               <div class="task-meta">${formatDate(t.תאריך)} • ${hebDayName(t.תאריך)} • שעה ${formatTime(t.שעה)}</div>
               ${notes}
               <div class="actions">
@@ -513,7 +489,6 @@
       }
     }
 
-    // אתחול הרשאות + UI ואז טעינה
     async function initAuthAndUI() {
       try {
         const me = await API.me();

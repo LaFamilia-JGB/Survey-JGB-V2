@@ -63,6 +63,15 @@
       flex-wrap: wrap;
     }
 
+    .bottom-nav .nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+}
+
+
     .tab-btn {
       background: #2c2c2c;
       color: #eee;
@@ -393,16 +402,50 @@
         <div class="panel-header">
           <div class="panel-title">ניהול משתתפים</div>
         </div>
+
         <div style="background:#1f1f1f;border:1px solid #2b2b2b;border-radius:12px;padding:12px;">
-          <div class="add-member-row"
-            style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
-            <input id="newMemberName" type="text" placeholder="שם חדש"
-              style="flex:1;padding:10px;border-radius:8px;border:1px solid #333;background:#1f1f1f;color:#ddd;box-sizing:border-box;min-width:220px;">
-            <button class="btn btn-secondary" id="addMemberBtn">➕ הוסף</button>
-          </div>
+
+          <!-- טופס יצירת משתמש חדש -->
+          <form id="newUserForm" style="display:grid;gap:10px;grid-template-columns:1fr 1fr;align-items:end;">
+            <div style="grid-column:1 / -1;color:#f1c40f;font-weight:800;">יצירת משתמש חדש</div>
+
+            <label>Username
+              <input type="text" name="username" placeholder="yonil" pattern="[A-Za-z0-9]{3,32}"
+                title="רק אותיות לטיניות ומספרים, 3–32 תווים" required
+                style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#1f1f1f;color:#ddd;" />
+
+              <label>שם תצוגה
+                <input name="display_name" required placeholder="יוני חי לוי"
+                  style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#1f1f1f;color:#ddd;">
+              </label>
+
+              <label>Password
+                <input name="password" type="text" required minlength="4" placeholder="לפחות 4 תווים"
+                  style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#1f1f1f;color:#ddd;">
+              </label>
+
+              <label>תפקיד
+                <select name="role"
+                  style="width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#1f1f1f;color:#ddd;">
+                  <option value="user">user</option>
+                  <option value="admin">admin</option>
+                </select>
+              </label>
+
+              <label style="display:flex;align-items:center;gap:8px;">
+                <input name="active" type="checkbox" checked> פעיל
+              </label>
+
+              <button class="btn btn-secondary" style="grid-column:1 / -1;justify-self:start;">➕ צור משתמש</button>
+          </form>
+
+          <hr style="border:none;border-top:1px solid #333;margin:12px 0;">
+
+          <!-- רשימת משתמשים -->
           <div id="membersList" class="pills" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
         </div>
       </section>
+
     </main>
   </div>
 
@@ -439,33 +482,77 @@
     const normDate = x => { const s = String(x || '').trim(); if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; const d = new Date(s); return !isNaN(d) ? d.toISOString().slice(0, 10) : s; };
     const normTime = x => { const s = String(x || '').trim(); const m = s.match(/^(\d{1,2}):(\d{2})/); return m ? (('0' + m[1]).slice(-2)) + ':' + m[2] : ''; };
 
-    /* ===== Data ===== */
+    // ===== Data =====
     let gData = { tasks: [], responses: [], members: [], responseCounts: [], responseCountsByDay: [] };
+
     async function loadAll(force = false) {
       const data = await (API?.getInitData?.({ force }) || {});
       gData.tasks = data.tasks || [];
       gData.responses = data.responses || [];
-      gData.members = data.members || [];
       gData.responseCounts = data.responseCounts || [];
       gData.responseCountsByDay = data.responseCountsByDay || [];
+
+      // לקחת את המחרוזות מ-initdata
+      const fromInit = data.members || [];
+
+      // להביא מידע מלא מ-getMembers
+      const m = await API.getMembers();
+      const full = m.members || [];
+
+      // לעשות התאמה – להשאיר רק מי שמופיע ב-initdata
+      gData.members = full.filter(x => fromInit.includes(x.display_name));
+
       return gData;
     }
 
     /* ===== Members ===== */
     function renderMembers() {
-      const host = document.getElementById('membersList'); host.innerHTML = '';
-      (gData.members || []).forEach(name => {
-        const pill = document.createElement('span'); pill.className = 'pill';
-        pill.innerHTML = `<span>${esc(name)}</span><button class="pill-del">🗑️</button>`;
-        pill.querySelector('.pill-del').addEventListener('click', async () => {
-          if (!confirm('למחוק את "' + name + '"?')) return;
-          showBusy(true);
-          try { await API.removeMember({ name }); await refreshAndRender(); }
-          catch (e) { console.error(e); alert('מחיקה נכשלה'); }
-          finally { showBusy(false); }
-        });
-        host.appendChild(pill);
+      const host = document.getElementById('membersList');
+      host.innerHTML = '';
+
+      const members = (gData.members || []).map(m =>
+        (typeof m === 'string') ? { username: m, display_name: m, role: 'user', active: true } : m
+      );
+
+      const byName = (a, b) => (a.display_name || a.username).localeCompare(b.display_name || b.username, 'he');
+      const admins = members.filter(m => m.role === 'admin' && m.active !== false).sort(byName);
+      const users = members.filter(m => m.role !== 'admin' && m.active !== false).sort(byName);
+
+      const makeGroup = (title, arr) => {
+        if (!arr.length) return;
+        const box = document.createElement('div');
+        box.innerHTML = `
+        <h3 style="color:#f1c40f;margin:8px 0;">${title} (${arr.length})</h3>
+        <div class="pills"></div>`;
+        const pills = box.querySelector('.pills');
+        arr.forEach(m => pills.appendChild(makePill(m)));
+        host.appendChild(box);
+      };
+
+      makeGroup('⭐ אדמינים', admins);
+      makeGroup('משתמשים', users);
+    }
+
+    function makePill(m) {
+      const pill = document.createElement('span');
+      pill.className = 'pill';
+      pill.innerHTML = `
+      <span>${(m.display_name || m.username)}</span>
+      <button class="pill-del" title="מחק">🗑️</button>`;
+      pill.querySelector('.pill-del').addEventListener('click', async () => {
+        if (!confirm('למחוק את "' + (m.display_name || m.username) + '"?')) return;
+        showBusy(true);
+        try {
+          await API.removeMember({ username: m.username });
+          await refreshAndRender();
+        } catch (e) {
+          console.error(e);
+          alert('מחיקה נכשלה');
+        } finally {
+          showBusy(false);
+        }
       });
+      return pill;
     }
 
     /* ===== Responses (רשימה+העתקה) ===== */
@@ -475,11 +562,25 @@
       const tDate = normDate(taskObj.תאריך);
       const tTime = normTime(taskObj.שעה);
 
-      const allMembers = (data.members || []).map(x => String(x || '').trim()).filter(Boolean);
+      // ✅ הפיכה של כל המשתתפים למחרוזות שמות
+      const allMembers = (data.members || [])
+        .map(m => {
+          if (typeof m === "string") return m;
+          if (typeof m === "object" && m !== null) {
+            return m.display_name || m.username || "";
+          }
+          return "";
+        })
+        .map(s => String(s).trim())
+        .filter(Boolean);
+
       const responses = showNames ? (data.responses || []) : [];
       const summary = data.responseCounts || [];
 
-      const grouped = {}, countsOnly = {}, responded = new Set();
+      const grouped = {};
+      const countsOnly = {};
+      const responded = new Set();
+
       if (showNames) {
         responses.forEach(r => {
           if (r.משימה !== tTask) return;
@@ -492,8 +593,10 @@
           (grouped[status] ||= []).push(label);
         });
       }
+
       if (!showNames) {
-        summary.filter(s => s["משימה"] === tTask && s["תאריך"] === tDate && s["שעה"] === tTime)
+        summary
+          .filter(s => s["משימה"] === taskObj.משימה && s["תאריך"] === taskObj.תאריך && s["שעה"] === taskObj.שעה)
           .forEach(s => { countsOnly[s["סטטוס"]] = Number(s.count); });
       } else {
         Object.entries(grouped).forEach(([k, arr]) => { countsOnly[k] = arr.length; });
@@ -501,73 +604,32 @@
 
       let notResponded = [];
       if (showNames) {
-        notResponded = allMembers.filter(m => !responded.has(m));
+        // ✅ מחזיר רק שמות אמיתיים
+        notResponded = allMembers.filter(name => name && !responded.has(name));
       } else {
         const totalAnswered = Object.values(countsOnly).reduce((a, b) => a + b, 0);
         const missing = Math.max(0, allMembers.length - totalAnswered);
-        notResponded = Array(missing).fill('');
+        notResponded = Array(missing).fill(""); // למשתמש רגיל לא מציג שמות
       }
+
       return { grouped, countsOnly, notResponded };
-    }
-
-
-    function makeShareText(taskObj, grouped, notResponded, countsOnly, { includeNames = false } = {}) {
-      const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)} • ${hebDayName(taskObj.תאריך)}`;
-      const lines = [`*${title}*`, ''];
-
-      Object.keys(countsOnly).forEach(k => {
-        const total = countsOnly[k];
-        if (includeNames && grouped[k]?.length) {
-          lines.push(`*${k}:*`);
-          grouped[k].forEach((n, i) => lines.push(`${i + 1}. ${n}`));
-        } else {
-          lines.push(`*${k}:* ${total}`);
-        }
-        lines.push('');
-      });
-
-      const nrCount = notResponded.length;
-      if (includeNames && nrCount) {
-        lines.push('*לא הגיבו ❓:*');
-        notResponded.forEach((n, i) => lines.push(`${i + 1}. ${n}`));
-        lines.push('');
-      }
-
-      lines.push('*סיכום:*');
-      Object.keys(countsOnly).forEach(k => lines.push(`- סה"כ ${k}: ${countsOnly[k]}`));
-      lines.push(`- סה"כ לא הגיבו: ${nrCount}`);
-
-      return lines.join("\n");
-    }
-
-    async function copyShare(encoded) {
-      const txt = decodeURIComponent(encoded);
-      try {
-        await navigator.clipboard.writeText(txt);
-        alert('הועתק ללוח');
-      } catch {
-        const ta = document.createElement('textarea');
-        ta.value = txt;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        ta.remove();
-        alert('הועתק ללוח (fallback)');
-      }
     }
 
     function renderResponsesBlock(taskObj, grouped, countsOnly, idx, notResponded) {
       const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)} • ${hebDayName(taskObj.תאריך)}`;
       const wrapId = `resp_${idx}`;
-      const shareText = makeShareText(taskObj, grouped, notResponded, countsOnly, { includeNames: true });
+      const shareText = makeShareText(taskObj, grouped, notResponded, countsOnly, { includeNames: gIsAdmin });
 
       let sections = '';
-      Object.entries(grouped).forEach(([k, arr], i) => {
+      let index = 1;
+      Object.entries(grouped).forEach(([k, arr]) => {
         if (!arr.length) return;
-        sections += `<section><div class="h"><b>${esc(k)}:</b></div><ol start="${i + 1}">${arr.map(n => `<li>${esc(n)}</li>`).join('')}</ol></section>`;
+        sections += `<section><div class="h"><b>${esc(k)}:</b></div><ol start="${index}">${arr.map(n => `<li>${esc(n)}</li>`).join('')}</ol></section>`;
+        index += arr.length;
       });
+
       if (notResponded.length) {
-        sections += `<section><div class="h"><b>לא הגיבו ❓:</b> (${notResponded.length})</div><ol>${notResponded.map(n => `<li>${esc(n)}</li>`).join('')}</ol></section>`;
+        sections += `<section><div class="h"><b>לא הגיבו ❓:</b> (${notResponded.length})</div><ol start="${index}">${notResponded.map(n => `<li>${esc(n)}</li>`).join('')}</ol></section>`;
       }
 
       const summaryLines = Object.entries(countsOnly).map(([k, v]) => `<div class="h"><b>סה"כ ${esc(k)}:</b> ${v}</div>`);
@@ -589,8 +651,49 @@
   </div>`;
     }
 
+    function makeShareText(taskObj, grouped, notResponded, countsOnly, { includeNames = false } = {}) {
+      const title = `${taskObj.משימה} • ${formatDate(taskObj.תאריך)} • ${formatTime(taskObj.שעה)} • ${hebDayName(taskObj.תאריך)}`;
+      const lines = [`*${title}*`, ''];
 
+      let i = 1;
+      if (includeNames) {
+        Object.entries(grouped).forEach(([k, arr]) => {
+          if (arr.length) {
+            lines.push(`*${k}:*`);
+            arr.forEach(n => lines.push(`${i++}. ${n}`));
+            lines.push('');
+          }
+        });
 
+        if (notResponded.length) {
+          lines.push('*לא הגיבו ❓:*');
+          notResponded.forEach(n => lines.push(`${i++}. ${n}`));
+          lines.push('');
+        }
+      }
+
+      lines.push('*סיכום:*');
+      Object.keys(countsOnly).forEach(k => lines.push(`- סה"כ ${k}: ${countsOnly[k]}`));
+      lines.push(`- סה"כ לא הגיבו: ${notResponded.length}`);
+
+      return lines.join("\n");
+    }
+
+    async function copyShare(encoded) {
+      const txt = decodeURIComponent(encoded);
+      try {
+        await navigator.clipboard.writeText(txt);
+        alert('הועתק ללוח');
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = txt;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        alert('הועתק ללוח (fallback)');
+      }
+    }
 
     function toggleResp(id) {
       const el = document.getElementById(id); if (!el) return;
@@ -600,21 +703,21 @@
     }
 
     /* ===== Tasks ===== */
-function renderTasks() {
-  const host = document.getElementById('tasksList');
-  const tasks = [...(gData.tasks || [])].sort((a, b) => new Date(b.תאריך) - new Date(a.תאריך));
-  if (!tasks.length) { 
-    host.innerHTML = '<p style="color:#aaa;">אין משימות</p>'; 
-    return; 
-  }
+    function renderTasks() {
+      const host = document.getElementById('tasksList');
+      const tasks = [...(gData.tasks || [])].sort((a, b) => new Date(b.תאריך) - new Date(a.תאריך));
+      if (!tasks.length) {
+        host.innerHTML = '<p style="color:#aaa;">אין משימות</p>';
+        return;
+      }
 
-  host.innerHTML = tasks.map((t, i) => {
-    const meta = `${formatDate(t.תאריך)} • ${hebDayName(t.תאריך)} • שעה ${formatTime(t.שעה)}`;
-    const notes = t.דגשים ? `<div class="task-notes">📌 ${esc(t.דגשים)}</div>` : '';
-    const { grouped, countsOnly, notResponded } = groupResponsesForTask(t, gData, { showNames: true });
-    const respBlock = renderResponsesBlock(t, grouped, countsOnly, i, notResponded);
+      host.innerHTML = tasks.map((t, i) => {
+        const meta = `${formatDate(t.תאריך)} • ${hebDayName(t.תאריך)} • שעה ${formatTime(t.שעה)}`;
+        const notes = t.דגשים ? `<div class="task-notes">📌 ${esc(t.דגשים)}</div>` : '';
+        const { grouped, countsOnly, notResponded } = groupResponsesForTask(t, gData, { showNames: true });
+        const respBlock = renderResponsesBlock(t, grouped, countsOnly, i, notResponded);
 
-    return `
+        return `
       <div class="task-card" 
            data-task="${esc(t.משימה)}" 
            data-date="${esc(normDate(t.תאריך))}" 
@@ -646,64 +749,64 @@ function renderTasks() {
           </div>
         </div>
       </div>`;
-  }).join("");
+      }).join("");
 
-  // 🎯 אחרי שהמשימות נבנו – לחבר מאזינים
-  host.querySelectorAll('.task-card').forEach(card => {
-    const oldTask = card.dataset.task;
-    const oldDate = card.dataset.date;
-    const oldTime = card.dataset.time;
-    const options = card.dataset.options || "[]";
+      // 🎯 אחרי שהמשימות נבנו – לחבר מאזינים
+      host.querySelectorAll('.task-card').forEach(card => {
+        const oldTask = card.dataset.task;
+        const oldDate = card.dataset.date;
+        const oldTime = card.dataset.time;
+        const options = card.dataset.options || "[]";
 
-    // ✏️ עריכה
-    card.querySelector('.btn-edit').addEventListener('click', () => {
-      card.querySelector('.edit-area').style.display = 'block';
-    });
+        // ✏️ עריכה
+        card.querySelector('.btn-edit').addEventListener('click', () => {
+          card.querySelector('.edit-area').style.display = 'block';
+        });
 
-    // ❌ ביטול
-    card.querySelector('.btn-cancel').addEventListener('click', () => {
-      card.querySelector('.edit-area').style.display = 'none';
-    });
+        // ❌ ביטול
+        card.querySelector('.btn-cancel').addEventListener('click', () => {
+          card.querySelector('.edit-area').style.display = 'none';
+        });
 
-    // 🗑️ מחיקה
-    card.querySelector('.trash').addEventListener('click', async () => {
-      if (!confirm(`למחוק את "${oldTask}"?`)) return;
-      showBusy(true);
-      try {
-        await API.removeTask({ task: oldTask, date: oldDate, time: oldTime });
-        await refreshAndRender();
-      } catch (e) {
-        console.error('removeTask failed', e);
-        alert('מחיקה נכשלה');
-      } finally {
-        showBusy(false);
-      }
-    });
+        // 🗑️ מחיקה
+        card.querySelector('.trash').addEventListener('click', async () => {
+          if (!confirm(`למחוק את "${oldTask}"?`)) return;
+          showBusy(true);
+          try {
+            await API.removeTask({ task: oldTask, date: oldDate, time: oldTime });
+            await refreshAndRender();
+          } catch (e) {
+            console.error('removeTask failed', e);
+            alert('מחיקה נכשלה');
+          } finally {
+            showBusy(false);
+          }
+        });
 
-    // 💾 שמירה
-    card.querySelector('.btn-save').addEventListener('click', async () => {
-      const newTask = card.querySelector('.inp-name').value.trim();
-      const newDate = card.querySelector('.inp-date').value;
-      const newTime = card.querySelector('.inp-time').value;
-      const newNotes = card.querySelector('.inp-notes').value.trim();
-      if (!newTask || !newDate) {
-        alert('שם משימה ותאריך חובה');
-        return;
-      }
-      const payload = { oldTask, oldDate, oldTime, options, newTask, newDate, newTime, notes: newNotes };
-      showBusy(true);
-      try {
-        await API.updateTask(payload);
-        await refreshAndRender();
-      } catch (err) {
-        console.error(err);
-        alert('שמירה נכשלה');
-      } finally {
-        showBusy(false);
-      }
-    });
-  });
-}
+        // 💾 שמירה
+        card.querySelector('.btn-save').addEventListener('click', async () => {
+          const newTask = card.querySelector('.inp-name').value.trim();
+          const newDate = card.querySelector('.inp-date').value;
+          const newTime = card.querySelector('.inp-time').value;
+          const newNotes = card.querySelector('.inp-notes').value.trim();
+          if (!newTask || !newDate) {
+            alert('שם משימה ותאריך חובה');
+            return;
+          }
+          const payload = { oldTask, oldDate, oldTime, options, newTask, newDate, newTime, notes: newNotes };
+          showBusy(true);
+          try {
+            await API.updateTask(payload);
+            await refreshAndRender();
+          } catch (err) {
+            console.error(err);
+            alert('שמירה נכשלה');
+          } finally {
+            showBusy(false);
+          }
+        });
+      });
+    }
 
     function showBusy(on) { const el = document.getElementById('busy'); if (el) el.style.display = on ? 'flex' : 'none'; }
     async function refreshAndRender() { await loadAll(true); renderTasks(); renderMembers(); setNavPadding(); }
@@ -717,15 +820,40 @@ function renderTasks() {
       setNavPadding();
     });
 
-    /* Members */
+
     document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('addMemberBtn').addEventListener('click', async () => {
-        const inp = document.getElementById('newMemberName'); const name = inp.value.trim();
-        if (!name) return inp.reportValidity();
+      const form = document.getElementById('newUserForm');
+      if (!form) return;
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(form);
+        const payload = {
+          username: String(fd.get('username') || '').trim().toLowerCase(),
+          display_name: String(fd.get('display_name') || '').trim(),
+          password: String(fd.get('password') || ''),
+          role: String(fd.get('role') || 'user'),
+          active: !!fd.get('active')
+        };
+        if (!payload.username || !payload.display_name || !payload.password) {
+          alert('יש למלא שם משתמש, שם תצוגה וסיסמה'); return;
+        }
+
         showBusy(true);
-        try { await API.addMember({ name }); inp.value = ''; await refreshAndRender(); }
-        catch (e) { console.error(e); alert('הוספה נכשלה'); }
-        finally { showBusy(false); }
+        try {
+          const r = await API.addMember(payload);
+          if (!r?.success) throw new Error(r?.error || 'addMember failed');
+          form.reset();
+          form.querySelector('select[name="role"]').value = 'user';
+          form.querySelector('input[name="active"]').checked = true;
+          await refreshAndRender();
+          alert('✅ המשתמש נוצר בהצלחה');
+        } catch (err) {
+          console.error(err);
+          alert('❌ שגיאה ביצירת משתמש: ' + (err.message || ''));
+        } finally {
+          showBusy(false);
+        }
       });
     });
 
@@ -745,6 +873,18 @@ function renderTasks() {
         document.getElementById('loader').style.display = 'none';
         document.getElementById('page').style.display = 'block';
         setNavPadding();
+        const logoutBtn = document.querySelector('.bottom-nav .nav-btn[data-logout]');
+        if (logoutBtn) {
+          const hasToken = !!(API?.Auth?.token || localStorage.getItem('token'));
+          logoutBtn.style.display = hasToken ? 'inline-flex' : 'none';
+          if (!logoutBtn._wired) {
+            logoutBtn.addEventListener('click', async () => {
+              try { await API.logout(); } catch { }
+              location.href = 'index.html?force=1';
+            });
+            logoutBtn._wired = true;
+          }
+        }
       }
     })();
   </script>
